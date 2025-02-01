@@ -20,16 +20,20 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@crypto-factor-labs/interchain-ts-abi": "^1.0.1-beta.1",
     "@nestjs/common": "^10.0.0",
+    "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^10.0.0",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/schedule": "^3.0.4",
-    "@unleashed-business/ts-web3-commons": "^6.3.0-beta.2",
-    "@unleashed-business/opendapps-cloud-ts-commons": "^6.8.0-beta.2",
+    "@nestjs/typeorm": "^11.0.0",
     "@unleashed-business/opendapps-cloud-nest-commons": "^2.11.3",
-    "@crypto-factor-labs/interchain-ts-abi": "^1.0.1-beta.1",
+    "@unleashed-business/opendapps-cloud-ts-commons": "^6.8.0-beta.2",
+    "@unleashed-business/ts-web3-commons": "^6.3.0-beta.2",
+    "pg": "^8.13.1",
     "reflect-metadata": "^0.1.13",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "typeorm": "^0.3.20"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
