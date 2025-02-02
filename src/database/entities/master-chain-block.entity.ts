@@ -2,10 +2,16 @@ import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity('master_chain_blocks')  // Table name
 export class MasterChainBlock {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn('uuid')  // Let the database automatically generate UUIDs
   id!: string;
 
-  @Column('bigint')
+  @Column({
+    type: 'bigint',
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string) => parseInt(value, 10),
+    },
+  })
   height!: number;
 
   @Column('timestamp')

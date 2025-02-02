@@ -37,5 +37,15 @@ export class DatabaseService implements OnModuleInit {
     return this.masterChainBlockRepository.find();
   }
 
+  async getGreatestHeight(): Promise<number> {
+    const block = await this.masterChainBlockRepository.findOne({
+      where: {},
+      select: ['height'],
+      order: { height: 'DESC' },
+    });
+
+    return block ? block.height : 0;
+  }
+
   // Add more database-related methods here
 }
