@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MasterChainBlock } from '../database/entities/master-chain-block.entity';
+import { CreateMasterChainBlockDto } from './dto/create-master-chain-block.dto';
 
 @Injectable()
 export class MasterChainService {
@@ -9,6 +10,13 @@ export class MasterChainService {
     @InjectRepository(MasterChainBlock)
     private readonly masterChainBlockRepository: Repository<MasterChainBlock>,
   ) { }
+
+  async createMasterChainBlock(createMasterChainBlockDto: CreateMasterChainBlockDto): Promise<MasterChainBlock> {
+    const masterChainBlock = this.masterChainBlockRepository.create(createMasterChainBlockDto);
+
+    // Save the entity to the database
+    return await this.masterChainBlockRepository.save(masterChainBlock);
+  }
 
   async getLatestBlock(): Promise<MasterChainBlock> {
     try {

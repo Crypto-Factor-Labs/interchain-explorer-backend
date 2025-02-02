@@ -1,0 +1,24 @@
+import { IsString, IsNumber, IsDate } from 'class-validator';  // Import class-validator decorators
+import { Type } from 'class-transformer'; // For transforming values, e.g., strings to dates
+
+export class CreateMasterChainBlockDto {
+  @IsNumber()
+  height!: number;
+
+  @IsDate()
+  @Type(() => Date)  // Use class-transformer to convert string to Date
+  timestamp!: Date;
+
+  @IsString()
+  merkle_root!: string;
+
+  @IsString()
+  block_hash!: string;
+
+  @IsString()
+  block_mint_transaction!: string;
+
+  @IsDate()
+  @Type(() => Date)
+  date_indexed!: Date;
+}

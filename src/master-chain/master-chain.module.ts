@@ -7,5 +7,6 @@ import { MasterChainController } from './master-chain.controller';  // API-route
   imports: [DatabaseModule],
   providers: [MasterChainService],
   controllers: [MasterChainController],
+  exports: [MasterChainService],
 })
 export class MasterChainModule { }
