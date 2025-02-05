@@ -1,7 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity('master_chain_blocks')  // Table name
-export class MasterChainBlock {
+export class MasterChainBlockEntity {
+
   @PrimaryGeneratedColumn('uuid')  // Let the database automatically generate UUIDs
   id!: string;
 

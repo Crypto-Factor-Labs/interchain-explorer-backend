@@ -1,16 +1,12 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { DatabaseService } from '../database/database.service';
-import { IndexerCommand } from './indexer.command';  // Import the CLI Command
+import { StorageModule } from '../storage/storage.module';
+import { IndexerCommand } from './indexer.command';  // Import CLI Command
 import { IndexerService } from './indexer.service';
-import { ScheduledIndexerService } from './scheduled-indexer.service';    // Import scheduled task
-import { MasterChainModule } from '../master-chain/master-chain.module';  // Import MasterChainModule to use its services
-import { MasterChainBlock } from '../database/entities/master-chain-block.entity';
+import { ScheduledIndexerService } from './scheduled-indexer.service';  // Scheduled task
+import { MasterChainModule } from '../master-chain/master-chain.module';
 
 @Module({
-  imports: [MasterChainModule,
-    TypeOrmModule.forFeature([MasterChainBlock]),  // Register the MasterChainBlock repository for injection
-  ],
-  providers: [DatabaseService, IndexerCommand, IndexerService, ScheduledIndexerService],
+  imports: [StorageModule, MasterChainModule],
+  providers: [IndexerCommand, IndexerService, ScheduledIndexerService],
 })
 export class IndexerModule { }

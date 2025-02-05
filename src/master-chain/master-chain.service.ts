@@ -1,40 +1,39 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { MasterChainBlock } from '../database/entities/master-chain-block.entity';
-import { CreateMasterChainBlockDto } from './dto/create-master-chain-block.dto';
+import { Injectable, Inject } from '@nestjs/common';
+import { MasterChainBlockRepository, MASTER_CHAIN_BLOCK_REPOSITORY } from '../storage/repositories/master-chain-block.repository';
+import { MasterChainBlockEntity } from '../storage/entities/master-chain-block.entity';
 
 @Injectable()
 export class MasterChainService {
   constructor(
-    @InjectRepository(MasterChainBlock)
-    private readonly masterChainBlockRepository: Repository<MasterChainBlock>,
+    @Inject(MASTER_CHAIN_BLOCK_REPOSITORY)  // Inject the storage repository
+    private readonly repository: MasterChainBlockRepository,
   ) { }
 
-  async createMasterChainBlock(createMasterChainBlockDto: CreateMasterChainBlockDto): Promise<MasterChainBlock> {
-    const masterChainBlock = this.masterChainBlockRepository.create(createMasterChainBlockDto);
-
-    // Save the entity to the database
-    return await this.masterChainBlockRepository.save(masterChainBlock);
+  /**
+   * Retrieve the highest block height in storage.
+   */
+  async getGreatestHeight(): Promise<number> {
+    return this.repository.getGreatestHeight();
   }
 
-  async getLatestBlock(): Promise<MasterChainBlock> {
-    try {
-      const block = await this.masterChainBlockRepository
-        .createQueryBuilder('block')     // Alias for the entity
-        .orderBy('block.height', 'DESC') // Order by the height in descending order
-        .getOne();                       // Retrieve a single block
-
-      if (!block) {
-        throw new Error('No block found');
-      }
-
-      return block;
-    } catch (error) {
-      console.error('Error fetching latest block:', error);
-      throw new Error('Failed to retrieve latest block');
-    }
+  /**
+   * Retrieve a MasterChainBlock by its height.
+   */
+  async getBlockByHeight(height: number): Promise<MasterChainBlockEntity | null> {
+    return this.repository.getBlockByHeight(height);
   }
 
-  // More service methods to interact with the Master Chain
+  /**
+   * Retrieve the latest indexed MasterChainBlock.
+   */
+  async getLatestBlock(): Promise<MasterChainBlockEntity | null> {
+    return this.repository.getLatestBlock();
+  }
+
+  /**
+   * Retrieve all indexed MasterChainBlocks.
+   */
+  async getAllBlocks(): Promise<MasterChainBlockEntity[]> {
+    return this.repository.getAllBlocks();
+  }
 }
