@@ -1,5 +1,6 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
-import { randomUUID } from 'crypto';
+//import { randomUUID } from 'crypto';
+import { PartisiaService } from '../partisia/partisia.service';
 import { MasterChainBlockRepository, MASTER_CHAIN_BLOCK_REPOSITORY } from '../storage/repositories/master-chain-block.repository';
 import { MasterChainBlockEntity } from '../storage/entities/master-chain-block.entity';
 
@@ -10,6 +11,7 @@ export class IndexerService {
   constructor(
     @Inject(MASTER_CHAIN_BLOCK_REPOSITORY)
     private readonly repository: MasterChainBlockRepository,
+    private readonly partisiaService: PartisiaService,
   ) { }
 
   /**
@@ -22,16 +24,38 @@ export class IndexerService {
 
   /**
    * TEMP: Generate mock block data for indexing.
-   */
+   *
   async generateBlockData(): Promise<Partial<MasterChainBlockEntity>> {
-    return {
-      height: await this.generateUniqueHeight(),  // TEMP: Generate an incrementing height
+    const latestBlockHeight = await this.partisiaService.getLatestBlockHeight();  // Fetch the latest block height from Partisia
+
+    const blockData: Partial<MasterChainBlockEntity> = {
+      height: latestBlockHeight,
       timestamp: new Date(),
       merkle_root: 'some-merkle-root',
       block_hash: randomUUID(),                   // TEMP: Generate a random hash
       block_mint_transaction: randomUUID(),       // TEMP: Generate a random transaction hash
       date_indexed: new Date(),
     };
+
+    return blockData;
+  }
+  */
+
+  async generateBlockData(): Promise<Partial<MasterChainBlockEntity>> {
+    // Fetch latest block once
+    const latestBlock = await this.partisiaService.fetchLatestBlock();
+
+    // Call all extraction methods synchronously
+    const blockData: Partial<MasterChainBlockEntity> = {
+      height: this.partisiaService.getHeight(latestBlock),
+      timestamp: this.partisiaService.getTimestamp(latestBlock),
+      merkle_root: this.partisiaService.getMerkleRoot(latestBlock),
+      block_hash: this.partisiaService.getHash(latestBlock),
+      block_mint_transaction: this.partisiaService.getMintTransaction(latestBlock),
+      date_indexed: new Date(),  // Timestamp of when this block was indexed
+    };
+
+    return blockData;
   }
 
   /**
@@ -47,15 +71,15 @@ export class IndexerService {
    * Index a new block by saving it to storage.
    */
   async indexBlock(blockData: Partial<MasterChainBlockEntity>): Promise<void> {
-    const masterChainBlock = new MasterChainBlockEntity();
-    masterChainBlock.height = blockData.height!;
-    masterChainBlock.timestamp = blockData.timestamp!;
-    masterChainBlock.merkle_root = blockData.merkle_root!;
-    masterChainBlock.block_hash = blockData.block_hash!;
-    masterChainBlock.block_mint_transaction = blockData.block_mint_transaction!;
-    masterChainBlock.date_indexed = new Date();
+    const block = new MasterChainBlockEntity();
+    block.height = blockData.height!;
+    block.timestamp = blockData.timestamp!;
+    block.merkle_root = blockData.merkle_root!;
+    block.block_hash = blockData.block_hash!;
+    block.block_mint_transaction = blockData.block_mint_transaction!;
+    block.date_indexed = new Date();
 
-    await this.repository.save(masterChainBlock);
+    await this.repository.save(block);
     this.logger.log(`>>> Indexed MasterChainBlock - Height: ${blockData.height}`);
   }
 }

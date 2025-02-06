@@ -27,9 +27,10 @@
     "emitDecoratorMetadata": true,
     // Language and environment
     "moduleResolution": "Node",
-    // PvG "module": "ESNext",
+    // PvG: "module": "ESNext",
+    // PvG: "target": "esnext", // Setting this to `ES2021` enables native support for `Node v16+`: https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping.
     "module": "CommonJS",
-    "target": "esnext", // Setting this to `ES2021` enables native support for `Node v16+`: https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping.
+    "target": "ES2020",
     "lib": [
       "ES2022", // By using ES2022 we get access to the `.cause` property on `Error` instances.
       "DOM" // We are adding `DOM` here to get the `fetch`, etc. types. This should be removed once these types are available via DefinitelyTyped.
