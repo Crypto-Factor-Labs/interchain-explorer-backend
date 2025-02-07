@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';  // Import Cron decorator
-import { IndexerService } from './indexer.service';
+import { IndexerService } from './indexer.service.js';
 
 @Injectable()
 export class ScheduledIndexerService {

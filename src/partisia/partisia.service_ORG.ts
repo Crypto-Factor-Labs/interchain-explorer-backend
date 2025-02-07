@@ -1,3 +1,4 @@
+/*
 import { PartisiaBlockchainService } from "@unleashed-business/ts-web3-commons/dist/pbc/pbc.service.js";
 import { PBCChain } from "@unleashed-business/ts-web3-commons/dist/pbc/pbc.chains.js";
 import { ForkRegistryAbi, MasterChainAbi, MasterChainMempoolAbi } from "@crypto-factor-labs/interchain-ts-abi";
@@ -17,7 +18,7 @@ import { HashTypeSpec, U32TypeSpec, U64TypeSpec } from "@unleashed-business/ts-w
    * To execute a state read from a smart contract on Partisia we use the .call() method of the
    * created service. We will have to register a callback that receives the state, and we can then query for
    * parameters from it.
-   */
+   *
   const lastBlockHeight = await partisiaConnection.call(
     PBCChain.TESTNET,
     MasterChainAbi,
@@ -43,7 +44,7 @@ import { HashTypeSpec, U32TypeSpec, U64TypeSpec } from "@unleashed-business/ts-w
        *    For this example we provide `true` as we are using `namedTypes`.
        * 
        * After calling the builder we have an instance of the tree which we can query and deserialize.
-       */
+       *
       const blockTree = trees[0](HashTypeSpec, namedTypes["PbcMasterChainBlock"], true);
       const lastBlock = blockTree.filter(x => x.key.hashValue().value.toString("hex") === tipHash).pop();
       const lastBlockHeight = lastBlock?.value.structValue().getFieldValue("height")!.asBN() ?? -1;
@@ -56,3 +57,4 @@ import { HashTypeSpec, U32TypeSpec, U64TypeSpec } from "@unleashed-business/ts-w
   console.log(`lastBlockHeight: ${lastBlockHeight}`);
 
 })().then(() => console.log("Executed!"));
+*/

@@ -1,13 +1,12 @@
 import { Module } from '@nestjs/common';
-import { StorageModule } from '../storage/storage.module';
-import { IndexerCommand } from './indexer.command';  // Import CLI Command
-import { IndexerService } from './indexer.service';
-import { ScheduledIndexerService } from './scheduled-indexer.service';  // Scheduled task
-import { PartisiaModule } from '../partisia/partisia.module';
-import { MasterChainModule } from '../master-chain/master-chain.module';
+import { StorageModule } from '../storage/storage.module.js';
+import { IndexerService } from './indexer.service.js';
+import { ScheduledIndexerService } from './scheduled-indexer.service.js';  // Scheduled task
+import { PartisiaModule } from '../partisia/partisia.module.js';
+import { MasterChainModule } from '../master-chain/master-chain.module.js';
 
 @Module({
   imports: [StorageModule, PartisiaModule, MasterChainModule],
-  providers: [IndexerCommand, IndexerService, ScheduledIndexerService],
+  providers: [IndexerService, ScheduledIndexerService],
 })
 export class IndexerModule { }

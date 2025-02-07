@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { MasterChainService } from './master-chain.service';
+import { MasterChainService } from './master-chain.service.js';
 
 @Controller('api/master-chain')
 export class MasterChainController {

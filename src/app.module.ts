@@ -1,15 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { CommandModule } from 'nestjs-command';
 import { ScheduleModule } from '@nestjs/schedule';
-import { StorageModule } from './storage/storage.module';
-import { IndexerModule } from './indexer/indexer.module';
-import { MasterChainModule } from './master-chain/master-chain.module';
+import { StorageModule } from './storage/storage.module.js';
+import { IndexerModule } from './indexer/indexer.module.js';
+import { MasterChainModule } from './master-chain/master-chain.module.js';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),  // Load environment variables
-    CommandModule,             // For using the CLI
     ScheduleModule.forRoot(),  // For scheduling jobs
     StorageModule,             // Storage configuration and entities
     IndexerModule,             // Indexer functionality

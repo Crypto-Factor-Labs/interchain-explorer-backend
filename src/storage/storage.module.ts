@@ -2,10 +2,10 @@ import { Module, OnModuleInit, Logger } from '@nestjs/common';
 import { TypeOrmModule, } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
-import { MASTER_CHAIN_BLOCK_REPOSITORY } from './repositories/master-chain-block.repository';
-import { MasterChainBlockPostgresRepository } from './repositories/master-chain-block-postgres.repository';
-import { MasterChainBlockEntity } from './entities/master-chain-block.entity';
-// import { PartialChainBlock } from './entities/partial-chain-block.entity';
+import { MASTER_CHAIN_BLOCK_REPOSITORY } from './repositories/master-chain-block.repository.js';
+import { MasterChainBlockPostgresRepository } from './repositories/master-chain-block-postgres.repository.js';
+import { MasterChainBlockEntity } from './entities/master-chain-block.entity.js';
+// import { PartialChainBlock } from './entities/partial-chain-block.entity.js';
 
 @Module({
   imports: [

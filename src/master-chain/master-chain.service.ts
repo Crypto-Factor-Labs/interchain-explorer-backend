@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { MasterChainBlockRepository, MASTER_CHAIN_BLOCK_REPOSITORY } from '../storage/repositories/master-chain-block.repository';
-import { MasterChainBlockEntity } from '../storage/entities/master-chain-block.entity';
+import { MasterChainBlockRepository, MASTER_CHAIN_BLOCK_REPOSITORY } from '../storage/repositories/master-chain-block.repository.js';
+import { MasterChainBlockEntity } from '../storage/entities/master-chain-block.entity.js';
 
 @Injectable()
 export class MasterChainService {

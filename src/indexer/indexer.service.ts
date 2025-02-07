@@ -1,8 +1,8 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 //import { randomUUID } from 'crypto';
-import { PartisiaService } from '../partisia/partisia.service';
-import { MasterChainBlockRepository, MASTER_CHAIN_BLOCK_REPOSITORY } from '../storage/repositories/master-chain-block.repository';
-import { MasterChainBlockEntity } from '../storage/entities/master-chain-block.entity';
+import { PartisiaService } from '../partisia/partisia.service.js';
+import { MasterChainBlockRepository, MASTER_CHAIN_BLOCK_REPOSITORY } from '../storage/repositories/master-chain-block.repository.js';
+import { MasterChainBlockEntity } from '../storage/entities/master-chain-block.entity.js';
 
 @Injectable()
 export class IndexerService {

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MasterChainBlockEntity } from '../entities/master-chain-block.entity';
-import { MasterChainBlockRepository } from './master-chain-block.repository';
+import { MasterChainBlockEntity } from '../entities/master-chain-block.entity.js';
+import { MasterChainBlockRepository } from './master-chain-block.repository.js';
 
 @Injectable()
 export class MasterChainBlockPostgresRepository implements MasterChainBlockRepository {
