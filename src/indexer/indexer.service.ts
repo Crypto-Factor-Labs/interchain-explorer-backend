@@ -1,5 +1,4 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
-//import { randomUUID } from 'crypto';
 import { PartisiaService } from '../partisia/partisia.service.js';
 import { MasterChainBlockRepository, MASTER_CHAIN_BLOCK_REPOSITORY } from '../storage/repositories/master-chain-block.repository.js';
 import { MasterChainBlockEntity } from '../storage/entities/master-chain-block.entity.js';
@@ -13,6 +12,31 @@ export class IndexerService {
     private readonly repository: MasterChainBlockRepository,
     private readonly partisiaService: PartisiaService,
   ) { }
+
+  // Trigger block indexing when the application starts.
+  async onApplicationBootstrap() {
+    this.logger.log('🚀 IndexerService is starting. Running initial block indexing...');
+    await this.indexBlocks();
+  }
+
+  async indexBlocks(): Promise<void> {
+    let lastIndexedHeight = await this.repository.getGreatestHeight();
+    //lastIndexedHeight = 1027;
+
+    // Fetch the new blocks from the blockchain
+    const newBlocks = await this.partisiaService.fetchBlocks(lastIndexedHeight);
+
+    // Index the new blocks
+    for (const block of newBlocks) {
+      await this.indexBlock(block);
+    }
+
+    if (newBlocks.length > 0) {
+      this.logger.log(`🌟 ${(newBlocks).length} new block${newBlocks.length === 1 ? '' : 's'} indexed`);
+      this.logger.log(`>>> Last indexed height = ${await this.repository.getGreatestHeight()}`);
+    }
+  }
+
 
   /**
    * TEMP: Generate a unique height as increment from the maximum height present in storage.
@@ -41,26 +65,9 @@ export class IndexerService {
   }
   */
 
-  async generateBlockData(): Promise<Partial<MasterChainBlockEntity>> {
-    // Fetch latest block once
-    const latestBlock = await this.partisiaService.fetchLatestBlock();
-
-    // Call all extraction methods synchronously
-    const blockData: Partial<MasterChainBlockEntity> = {
-      height: this.partisiaService.getHeight(latestBlock),
-      timestamp: this.partisiaService.getTimestamp(latestBlock),
-      merkle_root: this.partisiaService.getMerkleRoot(latestBlock),
-      block_hash: this.partisiaService.getHash(latestBlock),
-      block_mint_transaction: this.partisiaService.getMintTransaction(latestBlock),
-      date_indexed: new Date(),  // Timestamp of when this block was indexed
-    };
-
-    return blockData;
-  }
-
   /**
    * Manually trigger a block index (for testing purposes).
-   */
+   *
   async indexBlockManually() {
     const blockData = await this.generateBlockData();
     await this.indexBlock(blockData);
@@ -70,16 +77,34 @@ export class IndexerService {
   /**
    * Index a new block by saving it to storage.
    */
-  async indexBlock(blockData: Partial<MasterChainBlockEntity>): Promise<void> {
-    const block = new MasterChainBlockEntity();
-    block.height = blockData.height!;
-    block.timestamp = blockData.timestamp!;
-    block.merkle_root = blockData.merkle_root!;
-    block.block_hash = blockData.block_hash!;
-    block.block_mint_transaction = blockData.block_mint_transaction!;
-    block.date_indexed = new Date();
+  async indexBlock(block: any): Promise<void> {
+    // Create a new block entity
+    const entity = new MasterChainBlockEntity();
 
-    await this.repository.save(block);
-    this.logger.log(`>>> Indexed MasterChainBlock - Height: ${blockData.height}`);
+    entity.height = this.partisiaService.getHeight(block);
+    entity.timestamp = this.partisiaService.getTimestamp(block);
+    entity.merkle_root = this.partisiaService.getMerkleRoot(block);
+    entity.block_hash = this.partisiaService.getHash(block);
+    entity.block_mint_transaction = this.partisiaService.getMintTransaction(block);
+    entity.date_indexed = new Date();  // Timestamp of when this block was indexed
+
+    /*
+    console.log(`Indexing block
+      height: ${entity.height}
+      timestamp: ${entity.timestamp}
+      merkle_root: ${entity.merkle_root}
+      hash: ${entity.block_hash}
+      mint_transaction: ${entity.block_mint_transaction}`
+    );
+    */
+
+    // Save the block to storage
+    await this.repository.save(entity);
+
+    //console.log(`>>> Indexed MasterChainBlock - Height: ${entity.height}`);
+  }
+
+  async dummyTask() {
+    // Dummy task for the scheduler
   }
 }

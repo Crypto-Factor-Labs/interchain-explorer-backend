@@ -1,6 +1,7 @@
 /*
  * Tasks that can be triggered from the Command Line
  */
+/*
 import { Command } from 'commander';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
@@ -33,3 +34,4 @@ async function bootstrap() {
 }
 
 bootstrap().catch(err => console.error('Error in bootstrap:', err));
+*/

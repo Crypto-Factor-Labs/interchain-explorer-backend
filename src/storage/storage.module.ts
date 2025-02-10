@@ -48,7 +48,7 @@ export class StorageModule implements OnModuleInit {
   async onModuleInit() {
     try {
       await this.dataSource.query('SELECT 1'); // Verify database connection
-      this.logger.log('>>> Database connection established and verified successfully.');
+      this.logger.log(' ✅ Database connection established and verified successfully.');
     } catch (error) {
       this.logger.error(
         'Failed to verify database connection',

@@ -8,9 +8,9 @@ export class ScheduledIndexerService {
 
   // Schedule a task to run periodically
   @Cron(CronExpression.EVERY_MINUTE) // Cron expression for every minute
-  async indexBlock() {
-    const blockData = await this.indexerService.generateBlockData();
-    await this.indexerService.indexBlock(blockData);
-    console.log('>>> Scheduled task ran and indexed a new block!');
+  async indexBlocks() {
+    //await this.indexerService.dummyTask();
+    await this.indexerService.indexBlocks();
+    console.log('>>> Scheduled task ran to index new blocks!');
   }
 }
