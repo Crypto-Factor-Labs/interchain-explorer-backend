@@ -6,11 +6,11 @@ import { IndexerService } from './indexer.service.js';
 export class ScheduledIndexerService {
   constructor(private readonly indexerService: IndexerService) { }
 
-  // Schedule a task to run periodically
+  // Schedule a Job to run periodically
   @Cron(CronExpression.EVERY_MINUTE) // Cron expression for every minute
   async indexBlocks() {
-    //await this.indexerService.dummyTask();
+    //await this.indexerService.dummyJob();
     await this.indexerService.indexBlocks();
-    console.log('>>> Scheduled task ran to index new blocks!');
+    //console.log('>>> Scheduled Job ran to index new blocks!');
   }
 }

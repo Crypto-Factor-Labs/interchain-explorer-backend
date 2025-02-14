@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PartisiaBlockchainService } from '@unleashed-business/ts-web3-commons/dist/pbc/pbc.service.js';
 import { PBCChain } from '@unleashed-business/ts-web3-commons/dist/pbc/pbc.chains.js';
-import { ForkRegistryAbi, MasterChainAbi } from '@crypto-factor-labs/interchain-ts-abi';
+import { ForkRegistryAbi } from '@crypto-factor-labs/interchain-ts-abi';
 import { HashTypeSpec, U32TypeSpec } from '@unleashed-business/ts-web3-commons/dist/pbc/spec/commons.tspec.js';
 
 @Injectable()
@@ -10,7 +10,6 @@ export class PartisiaService {
   private readonly logger = new Logger(PartisiaService.name);
   private readonly partisiaConnection = new PartisiaBlockchainService(undefined);
   private readonly registryAddress = '0200db89eb449b5d1b2222931e5f8881eea822af12';  // Address of the blockchain registry
-  //private readonly targetSmartContract = '026a2ed097009a83301d88eef1305b69c5cb89bdf2';  // Target Smart Contract
   private readonly treeId = 0;  // ID of the AVL-tree of blocks to be used
 
   /** Fetch data from the Partisia BlockChain */
@@ -18,21 +17,26 @@ export class PartisiaService {
   async fetchBlocks(lastIndexedHeight: number): Promise<any[]> {
     let blocks: any[] = [];
     let forkNr = await this.fetchActiveForkNr();
-    //forkNr = 1;  // For testing with another fork
+    //forkNr = 1;             // For testing with another fork
+    //lastIndexedHeight = 10; // For testing with another fork
 
     //console.log(">>> Start fetching blocks");
     while (forkNr >= 0) {
       //console.log(`>>> Fetching blocks for fork ${forkNr}`);
 
-      // Get blockchain address for the current fork
+      // Fetch the blockchain address for the current fork
       const blockchainAddress = await this.fetchBlockchainAddress(forkNr);
       //console.log(`>>> Blockchain address for fork ${forkNr}: ${blockchainAddress}`);
 
+      // Fetch the ABI of the blockchain address Smart Contract
+      const abi = await this.fetchAbi(blockchainAddress);
+      //console.log(`>>> ABI for fork ${forkNr}: ${abi}`);
+
       // Fetch all blocks for the current blockchain address
-      const newBlocks = await this.fetchNewBlocks(forkNr, blockchainAddress, lastIndexedHeight);
+      const newBlocks = await this.fetchNewBlocks(forkNr, abi, blockchainAddress, lastIndexedHeight);
       blocks = blocks.concat(newBlocks);
 
-      break; // TESTING - only do active fork
+      //break; // TESTING - only do active fork
 
       // Decrease the fork number for the next iteration
       forkNr--;
@@ -42,11 +46,11 @@ export class PartisiaService {
     return blocks;
   }
 
-  private async fetchNewBlocks(forkNr: number, blockchainAddress: string, lastIndexedHeight: number): Promise<any[]> {
+  private async fetchNewBlocks(forkNr: number, abi: string, blockchainAddress: string, lastIndexedHeight: number): Promise<any[]> {
     let blocks: any[] = [];  // Array to collect blocks for the current fork
 
     // Start with the latest block of the blockchain
-    let block = await this.fetchLatestBlock(blockchainAddress);
+    let block = await this.fetchLatestBlock(abi, blockchainAddress);
 
     while (block) {
       const blockHeight = this.getHeight(block);
@@ -71,7 +75,7 @@ export class PartisiaService {
 
       // Fetch the previous block
       const prevBlockHash = this.getPrevHash(block);
-      block = await this.fetchBlock(blockchainAddress, prevBlockHash);
+      block = await this.fetchBlock(abi, blockchainAddress, prevBlockHash);
 
       if (!block) {
         console.log(`>>> Block not found for hash: ${prevBlockHash}. End of fork ${forkNr} reached.`);
@@ -127,10 +131,26 @@ export class PartisiaService {
     return blockchainAddress;
   }
 
-  async fetchLatestBlock(blockchainAddress: string): Promise<any> {
+  async fetchAbi(contractAddress: string): Promise<string> {
+    const url = "https://node1.testnet.partisiablockchain.com/chain/contracts/" + contractAddress;
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const data = await response.json();
+      return data.abi; // Extract and return the 'abi' field
+    } catch (error) {
+      console.error("Error fetching ABI:", error);
+      return "";
+    }
+  }
+
+  async fetchLatestBlock(abi: string, blockchainAddress: string): Promise<any> {
     const latestBlock = await this.partisiaConnection.call(
       PBCChain.TESTNET,
-      MasterChainAbi,
+      abi,
       blockchainAddress,
       (state, trees, namedTypes) => {
         // Extract the tip hash from the state
@@ -150,10 +170,10 @@ export class PartisiaService {
     return latestBlock;
   }
 
-  async fetchBlock(blockchainAddress: string, blockHash: string): Promise<any> {
+  async fetchBlock(abi: string, blockchainAddress: string, blockHash: string): Promise<any> {
     const block = await this.partisiaConnection.call(
       PBCChain.TESTNET,
-      MasterChainAbi,
+      abi,
       blockchainAddress,
       (_state, trees, namedTypes) => {
         const blockTree = trees[this.treeId](HashTypeSpec, namedTypes["PbcMasterChainBlock"], true);
@@ -164,7 +184,7 @@ export class PartisiaService {
     );
 
     if (!block) {
-      console.log(`⭕ Block with hash ${blockHash} not found.`);
+      this.logger.warn(`⭕ Block with hash ${blockHash} not found.`);
     }
 
     return block;
@@ -175,9 +195,9 @@ export class PartisiaService {
    * As an example of how a single property can be fetched from the latest block on the blockchain.
    * Don't expect this to be used. 
    */
-  async fetchLatestBlockHeight(blockchainAddress: string): Promise<number> {
+  async fetchLatestBlockHeight(abi: string, blockchainAddress: string): Promise<number> {
     try {
-      const latestBlock = await this.fetchLatestBlock(blockchainAddress);
+      const latestBlock = await this.fetchLatestBlock(abi, blockchainAddress);
       return this.getHeight(latestBlock);
     } catch (error) {
       const errMsg = `Error fetching height of latest block from blockchain ${blockchainAddress}`;

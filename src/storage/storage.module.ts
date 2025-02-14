@@ -2,6 +2,8 @@ import { Module, OnModuleInit, Logger } from '@nestjs/common';
 import { TypeOrmModule, } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
+import { IndexerLockRepository } from './repositories/indexer-lock.repository.js';
+import { IndexerLock } from './entities/indexer-lock.entity.js';
 import { MASTER_CHAIN_BLOCK_REPOSITORY } from './repositories/master-chain-block.repository.js';
 import { MasterChainBlockPostgresRepository } from './repositories/master-chain-block-postgres.repository.js';
 import { MasterChainBlockEntity } from './entities/master-chain-block.entity.js';
@@ -10,7 +12,7 @@ import { MasterChainBlockEntity } from './entities/master-chain-block.entity.js'
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),  // Ensure ConfigModule is imported and global
-    TypeOrmModule.forFeature([MasterChainBlockEntity /*, PartialChainBlock*/]),
+    TypeOrmModule.forFeature([IndexerLock, MasterChainBlockEntity /*, PartialChainBlock*/]),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule], // Import ConfigModule for dependency injection
       useFactory: async (configService: ConfigService) => {
@@ -22,7 +24,7 @@ import { MasterChainBlockEntity } from './entities/master-chain-block.entity.js'
           username: configService.get<string>('DB_USERNAME'),
           password: configService.get<string>('DB_PASSWORD'),
           database: configService.get<string>('DB_NAME'),
-          entities: [MasterChainBlockEntity /*, PartialChainBlock*/],
+          entities: [IndexerLock, MasterChainBlockEntity /*, PartialChainBlock*/],
           synchronize: false, // Should be false in production
         };
       },
@@ -30,13 +32,13 @@ import { MasterChainBlockEntity } from './entities/master-chain-block.entity.js'
     }),
   ],
   providers: [
+    IndexerLockRepository,
     {
       provide: MASTER_CHAIN_BLOCK_REPOSITORY,
       useClass: MasterChainBlockPostgresRepository, // Default storage backend
     },
   ],
-  //exports: [TypeOrmModule],
-  exports: [MASTER_CHAIN_BLOCK_REPOSITORY],
+  exports: [IndexerLockRepository, MASTER_CHAIN_BLOCK_REPOSITORY],
 })
 
 // Lifecycle hook to verify the database connection when the module initializes

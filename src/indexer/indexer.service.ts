@@ -2,38 +2,66 @@ import { Injectable, Inject, Logger } from '@nestjs/common';
 import { PartisiaService } from '../partisia/partisia.service.js';
 import { MasterChainBlockRepository, MASTER_CHAIN_BLOCK_REPOSITORY } from '../storage/repositories/master-chain-block.repository.js';
 import { MasterChainBlockEntity } from '../storage/entities/master-chain-block.entity.js';
+import { IndexerLockRepository } from '../storage/repositories/indexer-lock.repository.js';
 
 @Injectable()
 export class IndexerService {
   private readonly logger = new Logger(IndexerService.name);
 
   constructor(
+    // Repository for interacting with block storage
     @Inject(MASTER_CHAIN_BLOCK_REPOSITORY)
-    private readonly repository: MasterChainBlockRepository,
+    private readonly blockRepo: MasterChainBlockRepository,
+
+    // Repository for interacting with Indexer-lock storage
+    @Inject(IndexerLockRepository)
+    private readonly lockRepo: IndexerLockRepository,
+
     private readonly partisiaService: PartisiaService,
   ) { }
 
   // Trigger block indexing when the application starts.
   async onApplicationBootstrap() {
     this.logger.log('🚀 IndexerService is starting. Running initial block indexing...');
+    this.lockRepo.releaseLock();  // Force unlock at application start
     await this.indexBlocks();
   }
 
   async indexBlocks(): Promise<void> {
-    let lastIndexedHeight = await this.repository.getGreatestHeight();
-    //lastIndexedHeight = 1027;
+    // Check if an indexing job is already running
+    const isRunning = await this.lockRepo.isIndexingInProgress();
 
-    // Fetch the new blocks from the blockchain
-    const newBlocks = await this.partisiaService.fetchBlocks(lastIndexedHeight);
-
-    // Index the new blocks
-    for (const block of newBlocks) {
-      await this.indexBlock(block);
+    if (isRunning) {
+      this.logger.log('🛑 Indexing job is already running');
+      return;
     }
 
-    if (newBlocks.length > 0) {
-      this.logger.log(`🌟 ${(newBlocks).length} new block${newBlocks.length === 1 ? '' : 's'} indexed`);
-      this.logger.log(`>>> Last indexed height = ${await this.repository.getGreatestHeight()}`);
+    // Acquire the lock
+    await this.lockRepo.acquireLock();
+    this.logger.log('🔒 Lock acquired, starting indexing job...');
+
+    try {
+      let lastIndexedHeight = await this.blockRepo.getGreatestHeight();
+      //lastIndexedHeight = 1027;
+
+      // Fetch the new blocks from the blockchain
+      const newBlocks = await this.partisiaService.fetchBlocks(lastIndexedHeight);
+
+      // Index the new blocks
+      for (const block of newBlocks) {
+        await this.indexBlock(block);
+      }
+
+      if (newBlocks.length > 0) {
+        this.logger.log(`🌟 ${(newBlocks).length} new block${newBlocks.length === 1 ? '' : 's'} indexed`);
+        this.logger.log(`>>> Last indexed height = ${await this.blockRepo.getGreatestHeight()}`);
+      }
+    } catch (error) {
+      this.logger.error('Error during indexing of blocks:', error);
+    } finally {
+      // Release the lock after the job is done
+      await this.lockRepo.releaseLock();
+      this.logger.log('🔓 Lock released, indexing job completed!');
     }
   }
 
@@ -42,7 +70,7 @@ export class IndexerService {
    * TEMP: Generate a unique height as increment from the maximum height present in storage.
    */
   async generateUniqueHeight(): Promise<number> {
-    const greatestHeight = await this.repository.getGreatestHeight();
+    const greatestHeight = await this.blockRepo.getGreatestHeight();
     return greatestHeight + 1;
   }
 
@@ -99,12 +127,12 @@ export class IndexerService {
     */
 
     // Save the block to storage
-    await this.repository.save(entity);
+    await this.blockRepo.save(entity);
 
     //console.log(`>>> Indexed MasterChainBlock - Height: ${entity.height}`);
   }
 
-  async dummyTask() {
-    // Dummy task for the scheduler
+  async dummyJob() {
+    // Dummy Job for the scheduler
   }
 }

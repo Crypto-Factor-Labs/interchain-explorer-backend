@@ -29,7 +29,7 @@ export class MasterChainBlockPostgresRepository implements MasterChainBlockRepos
       order: { height: 'DESC' },
     });
 
-    return block ? block.height : 0;
+    return block ? block.height : -1;
   }
   async getBlockByHeight(height: number): Promise<MasterChainBlockEntity | null> {
     return this.repository.findOne({ where: { height } });
