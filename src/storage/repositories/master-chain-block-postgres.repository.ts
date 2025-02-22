@@ -36,7 +36,10 @@ export class MasterChainBlockPostgresRepository implements MasterChainBlockRepos
   }
 
   async getLatestBlock(): Promise<MasterChainBlockEntity | null> {
-    return this.repository.findOne({ order: { height: 'DESC' } });
+    return this.repository.findOne({
+      where: {},
+      order: { height: 'DESC' },
+    });
   }
 
   async getAllBlocks(): Promise<MasterChainBlockEntity[]> {
