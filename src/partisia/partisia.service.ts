@@ -51,34 +51,41 @@ export class PartisiaService {
 
     // Start with the latest block of the blockchain
     let block = await this.fetchLatestBlock(abi, blockchainAddress);
+    let blockHeight = this.getHeight(block);
+    const backlog = blockHeight - lastIndexedHeight;
 
-    while (block) {
-      const blockHeight = this.getHeight(block);
+    if (backlog > 0) {
+      if (backlog > 1)
+        this.logger.log(`>>> Catching up ${backlog} blocks`);
 
-      // Stop if the block is already indexed
-      if (blockHeight <= lastIndexedHeight)
-        break;
+      while (block) {
+        // Add the block to the array
+        blocks.push(block);
 
-      // Add the block to the array
-      blocks.push(block);
+        // For testing
+        console.log(`Height = ${blockHeight}, Hash = ${this.getHash(block)}`);
+        //if (blocks.length === 5)
+        //  break;
 
-      // For testing
-      console.log(`Height = ${blockHeight}, Hash = ${this.getHash(block)}`);
-      //if (blocks.length === 5)
-      //  break;
+        // Check if we reached the Genesis block
+        if (blockHeight === 0) {
+          this.logger.log("✅ Reached the Genenis block (height = 0). All blocks fetched!");
+          break;
+        }
 
-      // Check if we reached the Genesis block
-      if (blockHeight === 0) {
-        this.logger.log("✅ Reached the Genenis block (height = 0). All blocks fetched!");
-        break;
-      }
+        // Fetch the previous block
+        const prevBlockHash = this.getPrevHash(block);
+        block = await this.fetchBlock(abi, blockchainAddress, prevBlockHash);
 
-      // Fetch the previous block
-      const prevBlockHash = this.getPrevHash(block);
-      block = await this.fetchBlock(abi, blockchainAddress, prevBlockHash);
+        if (!block) {
+          console.log(`>>> Block not found for hash: ${prevBlockHash}. End of fork ${forkNr} reached.`);
+        } else {
+          blockHeight--;
 
-      if (!block) {
-        console.log(`>>> Block not found for hash: ${prevBlockHash}. End of fork ${forkNr} reached.`);
+          // Stop if the block is already indexed
+          if (blockHeight <= lastIndexedHeight)
+            break;
+        }
       }
     }
 
