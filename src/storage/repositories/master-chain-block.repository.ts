@@ -8,5 +8,6 @@ export interface MasterChainBlockRepository {
   getGreatestHeight(): Promise<number>;
   getBlockByHeight(height: number): Promise<MasterChainBlockEntity | null>;
   getLatestBlock(): Promise<MasterChainBlockEntity | null>;
+  getBlocks(take: number, skip: number): Promise<MasterChainBlockEntity[]>;
   getAllBlocks(): Promise<MasterChainBlockEntity[]>;
 }

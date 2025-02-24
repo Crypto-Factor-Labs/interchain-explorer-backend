@@ -31,6 +31,15 @@ export class MasterChainService {
   }
 
   /**
+   * Retrieve X blocks from storage, starting with the latest block.
+   * @param nr Number of blocks to fetch
+   * @param skip Number of blocks to skip (for pagination)
+   */
+  async getBlocks(nr: number, skip: number) {
+    return await this.repository.getBlocks(nr, skip);
+  }
+
+  /**
    * Retrieve all indexed MasterChainBlocks.
    */
   async getAllBlocks(): Promise<MasterChainBlockEntity[]> {
