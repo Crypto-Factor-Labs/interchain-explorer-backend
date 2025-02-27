@@ -14,9 +14,9 @@ export class MasterChainBlockPostgresRepository implements MasterChainBlockRepos
   async save(block: MasterChainBlockEntity): Promise<void> {
     await this.repository.save({
       height: block.height,
+      block_hash: block.block_hash,
       timestamp: block.timestamp,
       merkle_root: block.merkle_root,
-      block_hash: block.block_hash,
       block_mint_transaction: block.block_mint_transaction,
       date_indexed: block.date_indexed,
     });
@@ -31,8 +31,13 @@ export class MasterChainBlockPostgresRepository implements MasterChainBlockRepos
 
     return block ? block.height : -1;
   }
+
   async getBlockByHeight(height: number): Promise<MasterChainBlockEntity | null> {
     return this.repository.findOne({ where: { height } });
+  }
+
+  async getBlockByHash(block_hash: string): Promise<MasterChainBlockEntity | null> {
+    return this.repository.findOne({ where: { block_hash } });
   }
 
   async getLatestBlock(): Promise<MasterChainBlockEntity | null> {

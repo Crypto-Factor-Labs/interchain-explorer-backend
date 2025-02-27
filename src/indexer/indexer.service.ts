@@ -75,25 +75,6 @@ export class IndexerService {
   }
 
   /**
-   * TEMP: Generate mock block data for indexing.
-   *
-  async generateBlockData(): Promise<Partial<MasterChainBlockEntity>> {
-    const latestBlockHeight = await this.partisiaService.getLatestBlockHeight();  // Fetch the latest block height from Partisia
-
-    const blockData: Partial<MasterChainBlockEntity> = {
-      height: latestBlockHeight,
-      timestamp: new Date(),
-      merkle_root: 'some-merkle-root',
-      block_hash: randomUUID(),                   // TEMP: Generate a random hash
-      block_mint_transaction: randomUUID(),       // TEMP: Generate a random transaction hash
-      date_indexed: new Date(),
-    };
-
-    return blockData;
-  }
-  */
-
-  /**
    * Manually trigger a block index (for testing purposes).
    *
   async indexBlockManually() {
@@ -110,18 +91,18 @@ export class IndexerService {
     const entity = new MasterChainBlockEntity();
 
     entity.height = this.partisiaService.getHeight(block);
+    entity.block_hash = this.partisiaService.getHash(block);
     entity.timestamp = this.partisiaService.getTimestamp(block);
     entity.merkle_root = this.partisiaService.getMerkleRoot(block);
-    entity.block_hash = this.partisiaService.getHash(block);
     entity.block_mint_transaction = this.partisiaService.getMintTransaction(block);
     entity.date_indexed = new Date();  // Timestamp of when this block was indexed
 
     /*
     console.log(`Indexing block
       height: ${entity.height}
+      hash: ${entity.block_hash}
       timestamp: ${entity.timestamp}
       merkle_root: ${entity.merkle_root}
-      hash: ${entity.block_hash}
       mint_transaction: ${entity.block_mint_transaction}`
     );
     */

@@ -15,14 +15,14 @@ export class MasterChainBlockEntity {
   })
   height!: number;
 
+  @Column('text')
+  block_hash!: string;
+
   @Column('timestamp')
   timestamp!: Date;
 
   @Column('text')
   merkle_root!: string;
-
-  @Column('text')
-  block_hash!: string;
 
   @Column('text')
   block_mint_transaction!: string;

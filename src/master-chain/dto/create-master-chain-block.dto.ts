@@ -5,15 +5,15 @@ export class CreateMasterChainBlockDto {
   @IsNumber()
   height!: number;
 
+  @IsString()
+  block_hash!: string;
+
   @IsDate()
   @Type(() => Date)  // Use class-transformer to convert string to Date
   timestamp!: Date;
 
   @IsString()
   merkle_root!: string;
-
-  @IsString()
-  block_hash!: string;
 
   @IsString()
   block_mint_transaction!: string;

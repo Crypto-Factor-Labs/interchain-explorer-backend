@@ -11,13 +11,40 @@ export class MasterChainController {
     return this.masterChainService.getLatestBlock();
   }
 
+  // Retrieve a block by its height or its hash
+  @Get('block')
+  async getBlock(
+    @Query('height_or_hash') id: string
+  ) {
+    // Validate the identifier
+    if (!id) {
+      return { msg: 'Provide a block height or hash as identifier.' };
+    }
+
+    let block;
+
+    // Check if the identifier is a number (height) or string (hash)
+    const isHeight = !isNaN(Number(id));
+    if (isHeight) {
+      block = await this.masterChainService.getBlockByHeight(Number(id));
+    } else {
+      block = await this.masterChainService.getBlockByHash(id);
+    }
+
+    if (!block) {
+      return { msg: `No block found with ${isHeight ? 'height' : 'hash'} ${id}` };
+    }
+
+    return block;
+  }
+
   // Retrieve X blocks, after skipping a number of blocks first
   @Get('blocks')
   async getBlocks(
     @Query('nr') nr: number, // Number of blocks to retrieve
     @Query('skip') skip: number = 0, // Optional pagination offset (default to 0)
   ) {
-    // Validate 'nr' parameter
+    // Validate `nr` parameter
     if (!nr || nr <= 0) {
       return { msg: 'Invalid number of blocks to retrieve' };
     }

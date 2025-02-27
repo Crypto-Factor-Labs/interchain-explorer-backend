@@ -7,6 +7,7 @@ export interface MasterChainBlockRepository {
   save(block: MasterChainBlockEntity): Promise<void>;
   getGreatestHeight(): Promise<number>;
   getBlockByHeight(height: number): Promise<MasterChainBlockEntity | null>;
+  getBlockByHash(block_hash: string): Promise<MasterChainBlockEntity | null>;
   getLatestBlock(): Promise<MasterChainBlockEntity | null>;
   getBlocks(take: number, skip: number): Promise<MasterChainBlockEntity[]>;
   getAllBlocks(): Promise<MasterChainBlockEntity[]>;

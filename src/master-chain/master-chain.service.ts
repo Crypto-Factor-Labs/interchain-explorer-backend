@@ -24,6 +24,13 @@ export class MasterChainService {
   }
 
   /**
+   * Retrieve a MasterChainBlock by its height.
+   */
+  async getBlockByHash(hash: string): Promise<MasterChainBlockEntity | null> {
+    return this.repository.getBlockByHash(hash);
+  }
+
+  /**
    * Retrieve the latest indexed MasterChainBlock.
    */
   async getLatestBlock(): Promise<MasterChainBlockEntity | null> {
