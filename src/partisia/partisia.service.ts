@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import { PartisiaBlockchainService } from '@unleashed-business/ts-web3-commons/dist/pbc/pbc.service.js';
 import { PBCChain } from '@unleashed-business/ts-web3-commons/dist/pbc/pbc.chains.js';
@@ -9,8 +10,18 @@ import { HashTypeSpec, U32TypeSpec } from '@unleashed-business/ts-web3-commons/d
 export class PartisiaService {
   private readonly logger = new Logger(PartisiaService.name);
   private readonly partisiaConnection = new PartisiaBlockchainService(undefined);
-  private readonly registryAddress = '0200db89eb449b5d1b2222931e5f8881eea822af12';  // Address of the blockchain registry
+  private readonly registryAddress: string;
   private readonly treeId = 0;  // ID of the AVL-tree of blocks to be used
+
+  constructor(private configService: ConfigService) {
+    // Get the address of the Blockchain Registry from the .env-file 
+    const registryAddress = this.configService.get<string>('PBC_REGISTRY_ADDRESS');
+    if (!registryAddress) {
+      throw new Error('🛑 PBC_REGISTRY_ADDRESS is not defined in the environment variables (.env)!');
+    }
+
+    this.registryAddress = registryAddress;
+  }
 
   /** Fetch data from the Partisia BlockChain */
 
@@ -32,8 +43,12 @@ export class PartisiaService {
       const abi = await this.fetchAbi(blockchainAddress);
       //console.log(`>>> ABI for fork ${forkNr}: ${abi}`);
 
-      // Fetch all blocks for the current blockchain address
+      // Fetch all blocks for the current blockchain address.
+      // Stop fetching when no new blocks were found in a fork.
       const newBlocks = await this.fetchNewBlocks(forkNr, abi, blockchainAddress, lastIndexedHeight);
+      if (newBlocks.length === 0)
+        break;
+
       blocks = blocks.concat(newBlocks);
 
       //break; // TESTING - only do active fork
