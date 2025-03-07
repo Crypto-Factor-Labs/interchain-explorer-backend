@@ -6,7 +6,7 @@ export class CreateMasterChainBlockDto {
   height!: number;
 
   @IsString()
-  block_hash!: string;
+  block_hash!: string;  // Primary Key
 
   @IsDate()
   @Type(() => Date)  // Use class-transformer to convert string to Date

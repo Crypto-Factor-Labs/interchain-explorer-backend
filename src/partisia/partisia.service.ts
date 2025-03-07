@@ -184,6 +184,11 @@ export class PartisiaService {
         const blockTree = trees[this.treeId](HashTypeSpec, namedTypes["PbcMasterChainBlock"], true);
         const blockTreeElement = blockTree.filter(x => x.key.hashValue().value.toString("hex") === tipHash).pop();
         const latestBlock = blockTreeElement?.value.structValue();
+
+        const partialBlockHashes = this.getPartialBlockHashes(latestBlock);
+        console.log(`#PartialBlockHashes = ${partialBlockHashes.length}`);
+        console.log(partialBlockHashes);
+
         return latestBlock;
       },
       [this.treeId]
@@ -259,5 +264,24 @@ export class PartisiaService {
     return "not-implemented-yet-" + randomUUID();
     //return block?.getFieldValue("")?.toString() ?? "unknown-transaction";
   }
+
+  getPartialBlockHashes(block: any): string[] {
+    // Get the List of PartialBlocks
+    const partialBlocks = block?.getFieldValue("partial_blocks")?.vals ?? [];
+    const hashes: string[] = [];
+
+    // Iterate over the PartialBlocks to get the hashes
+    partialBlocks.forEach((partialBlock: any) => {
+      const blockHash = partialBlock?.structValue()?.getFieldValue("block_hash")?.structValue()
+        ?.getFieldValue("inner")?.hashValue()?.value?.toString("hex") ?? "";
+
+      if (blockHash) {
+        hashes.push(blockHash);
+      }
+    });
+
+    return hashes;
+  }
+
 }
 
