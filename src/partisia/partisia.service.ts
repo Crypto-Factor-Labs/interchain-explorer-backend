@@ -190,7 +190,7 @@ export class PartisiaService {
       blockchainAddress,
       async (state, trees, namedTypes) => {
         // Extract the tip hash from the state
-        const tipHash = state["tip"]?.structValue()?.getFieldValue("inner")?.hashValue().value.toString("hex") ?? "";
+        const tipHash = this.GetHashFromFieldWithInner(state["tip"]);
         //console.log(`>>> Tip of blockchain = ${tipHash}`);
 
         // Extract the block tree and find the last block by tip hash
@@ -200,8 +200,8 @@ export class PartisiaService {
         const latestBlock = blockTreeElement?.value.structValue();
 
         const partialBlockHashes = this.getPartialBlockHashes(latestBlock);
-        console.log(`#PartialBlockHashes = ${partialBlockHashes.length}`);
-        console.log(partialBlockHashes);
+        //console.log(`#PartialBlockHashes = ${partialBlockHashes.length}`);
+        //console.log(partialBlockHashes);
 
         for (const pbhash of partialBlockHashes) {
           const partialBlock = await this.fetchPartialBlock(abi, blockchainAddress, pbhash);
@@ -216,7 +216,7 @@ export class PartisiaService {
           //console.log(`mempool_epoch = ${mempool_epoch}`);
           const confirmed = this.getConfirmed(partialBlock);
           //console.log(`confirmed = ${confirmed}`);
-          console.log(`partialBlock: ${chainId}, ${mempool_epoch}, ${confirmed} : ${height} - ${hash}`);
+          console.log(`latestPartialBlock: ${chainId}, ${mempool_epoch}, ${confirmed} : ${height} - ${hash}`);
         }
 
         return latestBlock;
@@ -263,6 +263,16 @@ export class PartisiaService {
     }
   }
 
+  /**
+   * Retrieves the hash value from a given field's "inner" property and returns it as a hexadecimal string.
+   * 
+   * @param {any} fieldValue - The object containing the field from which the hash is to be extracted.
+   * @returns {string} - The hexadecimal representation of the hash if available, or `"???"` if the field or hash is not found.
+   */
+  GetHashFromFieldWithInner(fieldValue: any) {
+    return fieldValue?.structValue()?.getFieldValue("inner")?.hashValue().value.toString("hex") ?? "???";
+  }
+
   /*** Methods to get properties from a Master- or PartialBlock ***/
 
   getHeight(block: any): number {
@@ -270,13 +280,11 @@ export class PartisiaService {
   }
 
   getPrevHash(block: any): string {
-    return block?.getFieldValue("prev_block_hash").structValue()
-      .getFieldValue("inner").hashValue().value.toString("hex") ?? "";
+    return this.GetHashFromFieldWithInner(block?.getFieldValue("prev_block_hash"));
   }
 
   getHash(block: any): string {
-    return block?.getFieldValue("block_hash").structValue()
-      .getFieldValue("inner").hashValue().value.toString("hex") ?? "";
+    return this.GetHashFromFieldWithInner(block?.getFieldValue("block_hash"));
   }
 
   /*** Methods to get properties from a MasterBlock ***/
@@ -287,8 +295,7 @@ export class PartisiaService {
   }
 
   getMerkleRoot(block: any): string {
-    return block?.getFieldValue("partial_blocks_root").structValue()
-      .getFieldValue("inner").hashValue()?.value?.toString("hex") ?? "";
+    return this.GetHashFromFieldWithInner(block?.getFieldValue("partial_blocks_root"));
   }
 
   getMintTransaction(_block: any): string {
@@ -304,8 +311,7 @@ export class PartisiaService {
 
     // Iterate over the PartialBlocks to get the hashes
     partialBlocks.forEach((partialBlock: any) => {
-      const blockHash = partialBlock.structValue().getFieldValue("block_hash").structValue()
-        .getFieldValue("inner").hashValue().value.toString("hex") ?? "";
+      const blockHash = this.GetHashFromFieldWithInner(partialBlock.structValue().getFieldValue("block_hash"));
 
       if (blockHash) {
         hashes.push(blockHash);
@@ -339,9 +345,8 @@ export class PartisiaService {
 
         // The values of the elements of the tree are the PartialBlocks.
         // Find the applicable PartialBlock by filtering on field 'block_hash' of the Elements of the Tree
-        const blockTreeElement = blockTree.filter(element => element.value.structValue()?.
-          getFieldValue("block_hash")?.structValue()?.getFieldValue("inner")?.
-          hashValue()?.value?.toString("hex") === blockHash).pop();
+        const blockTreeElement = blockTree.filter(element =>
+          this.GetHashFromFieldWithInner(element.value.structValue()?.getFieldValue("block_hash")) === blockHash).pop();
 
         return blockTreeElement?.value.structValue();
       },

@@ -133,7 +133,8 @@ export class IndexerService {
       const height = this.partisiaService.getHeight(partialBlock);
       const hash = this.partisiaService.getHash(partialBlock);
       const mempool_epoch = this.partisiaService.getMempoolEpoch(partialBlock);
-      console.log(`partialBlock: ${chainId}, ${mempool_epoch} : ${height} - ${hash}`);
+      const confirmed = this.partisiaService.getConfirmed(partialBlock);
+      console.log(`>>> partialBlock: ${chainId}, ${mempool_epoch}, ${confirmed} : ${height} - ${hash}`);
     }
   }
 
