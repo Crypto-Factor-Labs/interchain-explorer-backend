@@ -45,7 +45,7 @@ export class IndexerService {
       //lastIndexedHeight = 1027;
 
       // Fetch the new blocks from the blockchain
-      const newBlocks = await this.partisiaService.fetchBlocks(lastIndexedHeight);
+      const newBlocks = await this.partisiaService.fetchMasterBlocks(lastIndexedHeight);
 
       // Index the new blocks
       for (const block of newBlocks) {
@@ -97,6 +97,8 @@ export class IndexerService {
     entity.block_mint_transaction = this.partisiaService.getMintTransaction(block);
     entity.date_indexed = new Date();  // Timestamp of when this block was indexed
 
+    this.indexPartialBlocks(block);
+
     /*
     console.log(`Indexing block
       height: ${entity.height}
@@ -111,6 +113,28 @@ export class IndexerService {
     await this.blockRepo.save(entity);
 
     //console.log(`>>> Indexed MasterChainBlock - Height: ${entity.height}`);
+  }
+
+  async indexPartialBlocks(masterBlock: any): Promise<void> {
+    console.log('>>> Indexing PartialBlocks...');
+
+    // TEMPORARY !!!
+    // This should be taken care of inside the PartisiaService.
+    const forkNr = await this.partisiaService.fetchActiveForkNr();
+    const blockchainAddress = await this.partisiaService.fetchBlockchainAddress(forkNr);
+    const abi = await this.partisiaService.fetchAbi(blockchainAddress);
+
+    const partialBlockHashes = this.partisiaService.getPartialBlockHashes(masterBlock);
+    console.log(`#PartialBlockHashes = ${partialBlockHashes.length}`);
+
+    for (const blockHash of partialBlockHashes) {
+      const partialBlock = await this.partisiaService.fetchPartialBlock(abi, blockchainAddress, blockHash);
+      const chainId = this.partisiaService.getChainId(partialBlock);
+      const height = this.partisiaService.getHeight(partialBlock);
+      const hash = this.partisiaService.getHash(partialBlock);
+      const mempool_epoch = this.partisiaService.getMempoolEpoch(partialBlock);
+      console.log(`partialBlock: ${chainId}, ${mempool_epoch} : ${height} - ${hash}`);
+    }
   }
 
   async dummyJob() {

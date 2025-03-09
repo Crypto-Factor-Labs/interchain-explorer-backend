@@ -6,6 +6,10 @@ import { PBCChain } from '@unleashed-business/ts-web3-commons/dist/pbc/pbc.chain
 import { ForkRegistryAbi } from '@crypto-factor-labs/interchain-ts-abi';
 import { HashTypeSpec, U32TypeSpec } from '@unleashed-business/ts-web3-commons/dist/pbc/spec/commons.tspec.js';
 
+//import { PartialChainRegistryAbi, PartialChainRegistryAbiFunctional } from "@crypto-factor-labs/interchain-ts-abi";
+//import { Web3Contract, blockchainIndex } from "@unleashed-business/ts-web3-commons";
+//import { buildContractToolkit } from "../toolkit.js";
+
 @Injectable()
 export class PartisiaService {
   private readonly logger = new Logger(PartisiaService.name);
@@ -23,9 +27,19 @@ export class PartisiaService {
     this.registryAddress = registryAddress;
   }
 
+  /*
+  private readonly contractToolkit = buildContractToolkit();
+  private readonly web3Contract = new Web3Contract<PartialChainRegistryAbiFunctional>(this.contractToolkit, PartialChainRegistryAbi);
+  private registryContract: any;
+
+  async onModuleInit() {
+    this.registryContract = this.web3Contract.readOnlyInstance(blockchainIndex.DMC_TESTCHAIN, this.registryAddress);
+  }
+  */
+
   /** Fetch data from the Partisia BlockChain */
 
-  async fetchBlocks(lastIndexedHeight: number): Promise<any[]> {
+  async fetchMasterBlocks(lastIndexedHeight: number): Promise<any[]> {
     let blocks: any[] = [];
     let forkNr = await this.fetchActiveForkNr();
     //forkNr = 1;             // For testing with another fork
@@ -45,7 +59,7 @@ export class PartisiaService {
 
       // Fetch all blocks for the current blockchain address.
       // Stop fetching when no new blocks were found in a fork.
-      const newBlocks = await this.fetchNewBlocks(forkNr, abi, blockchainAddress, lastIndexedHeight);
+      const newBlocks = await this.fetchNewMasterBlocks(forkNr, abi, blockchainAddress, lastIndexedHeight);
       if (newBlocks.length === 0)
         break;
 
@@ -61,11 +75,11 @@ export class PartisiaService {
     return blocks;
   }
 
-  private async fetchNewBlocks(forkNr: number, abi: string, blockchainAddress: string, lastIndexedHeight: number): Promise<any[]> {
+  private async fetchNewMasterBlocks(forkNr: number, abi: string, blockchainAddress: string, lastIndexedHeight: number): Promise<any[]> {
     let blocks: any[] = [];  // Array to collect blocks for the current fork
 
     // Start with the latest block of the blockchain
-    let block = await this.fetchLatestBlock(abi, blockchainAddress);
+    let block = await this.fetchLatestMasterBlock(abi, blockchainAddress);
     let blockHeight = this.getHeight(block);
     const backlog = blockHeight - lastIndexedHeight;
 
@@ -90,7 +104,7 @@ export class PartisiaService {
 
         // Fetch the previous block
         const prevBlockHash = this.getPrevHash(block);
-        block = await this.fetchBlock(abi, blockchainAddress, prevBlockHash);
+        block = await this.fetchMasterBlock(abi, blockchainAddress, prevBlockHash);
 
         if (!block) {
           console.log(`>>> Block not found for hash: ${prevBlockHash}. End of fork ${forkNr} reached.`);
@@ -169,12 +183,12 @@ export class PartisiaService {
     }
   }
 
-  async fetchLatestBlock(abi: string, blockchainAddress: string): Promise<any> {
+  async fetchLatestMasterBlock(abi: string, blockchainAddress: string): Promise<any> {
     const latestBlock = await this.partisiaConnection.call(
       PBCChain.TESTNET,
       abi,
       blockchainAddress,
-      (state, trees, namedTypes) => {
+      async (state, trees, namedTypes) => {
         // Extract the tip hash from the state
         const tipHash = state["tip"]?.structValue()?.getFieldValue("inner")?.hashValue().value.toString("hex") ?? "";
         //console.log(`>>> Tip of blockchain = ${tipHash}`);
@@ -189,6 +203,22 @@ export class PartisiaService {
         console.log(`#PartialBlockHashes = ${partialBlockHashes.length}`);
         console.log(partialBlockHashes);
 
+        for (const pbhash of partialBlockHashes) {
+          const partialBlock = await this.fetchPartialBlock(abi, blockchainAddress, pbhash);
+          //console.log(partialBlock);
+          const chainId = this.getChainId(partialBlock);
+          //console.log(`chainId = ${chainId}`);
+          const height = this.getHeight(partialBlock);
+          //console.log(`height = ${height}`);
+          const hash = this.getHash(partialBlock);
+          //console.log(`hash = ${hash}`);
+          const mempool_epoch = this.getMempoolEpoch(partialBlock);
+          //console.log(`mempool_epoch = ${mempool_epoch}`);
+          const confirmed = this.getConfirmed(partialBlock);
+          //console.log(`confirmed = ${confirmed}`);
+          console.log(`partialBlock: ${chainId}, ${mempool_epoch}, ${confirmed} : ${height} - ${hash}`);
+        }
+
         return latestBlock;
       },
       [this.treeId]
@@ -197,12 +227,12 @@ export class PartisiaService {
     return latestBlock;
   }
 
-  async fetchBlock(abi: string, blockchainAddress: string, blockHash: string): Promise<any> {
+  async fetchMasterBlock(abi: string, blockchainAddress: string, blockHash: string): Promise<any> {
     const block = await this.partisiaConnection.call(
       PBCChain.TESTNET,
       abi,
       blockchainAddress,
-      (_state, trees, namedTypes) => {
+      (_state, trees, namedTypes) => {  // trees --> property 'blocks' in PBC Explorer
         const blockTree = trees[this.treeId](HashTypeSpec, namedTypes["PbcMasterChainBlock"], true);
         const blockTreeElement = blockTree.filter(x => x.key.hashValue().value.toString("hex") === blockHash).pop();
         return blockTreeElement?.value.structValue();
@@ -222,58 +252,60 @@ export class PartisiaService {
    * As an example of how a single property can be fetched from the latest block on the blockchain.
    * Don't expect this to be used. 
    */
-  async fetchLatestBlockHeight(abi: string, blockchainAddress: string): Promise<number> {
+  async fetchLatestMasterBlockHeight(abi: string, blockchainAddress: string): Promise<number> {
     try {
-      const latestBlock = await this.fetchLatestBlock(abi, blockchainAddress);
+      const latestBlock = await this.fetchLatestMasterBlock(abi, blockchainAddress);
       return this.getHeight(latestBlock);
     } catch (error) {
-      const errMsg = `Error fetching height of latest block from blockchain ${blockchainAddress}`;
+      const errMsg = `Error fetching height of latest MasterBlock from blockchain ${blockchainAddress}`;
       this.logger.error(errMsg, error);
       throw new Error(errMsg);
     }
   }
 
-  /*** Methods to get properties from a block ***/
+  /*** Methods to get properties from a Master- or PartialBlock ***/
 
   getHeight(block: any): number {
-    return block?.getFieldValue("height")?.asBN()?.toNumber() ?? -1;
+    return block?.getFieldValue("height").asBN().toNumber() ?? -1;
   }
 
+  getPrevHash(block: any): string {
+    return block?.getFieldValue("prev_block_hash").structValue()
+      .getFieldValue("inner").hashValue().value.toString("hex") ?? "";
+  }
+
+  getHash(block: any): string {
+    return block?.getFieldValue("block_hash").structValue()
+      .getFieldValue("inner").hashValue().value.toString("hex") ?? "";
+  }
+
+  /*** Methods to get properties from a MasterBlock ***/
+
   getTimestamp(block: any): Date {
-    const rawTimestamp = block?.getFieldValue("timestamp")?.asBN()?.toNumber() ?? Date.now();
+    const rawTimestamp = block?.getFieldValue("timestamp").asBN().toNumber() ?? Date.now();
     return new Date(rawTimestamp);
   }
 
   getMerkleRoot(block: any): string {
-    return block?.getFieldValue("partial_blocks_root")?.structValue()
-      ?.getFieldValue("inner")?.hashValue()?.value?.toString("hex") ?? "";
-  }
-
-  getHash(block: any): string {
-    return block?.getFieldValue("block_hash")?.structValue()
-      ?.getFieldValue("inner")?.hashValue()?.value?.toString("hex") ?? "";
-  }
-
-  getPrevHash(block: any): string {
-    return block?.getFieldValue("prev_block_hash")?.structValue()
-      ?.getFieldValue("inner")?.hashValue()?.value?.toString("hex") ?? "";
+    return block?.getFieldValue("partial_blocks_root").structValue()
+      .getFieldValue("inner").hashValue()?.value?.toString("hex") ?? "";
   }
 
   getMintTransaction(_block: any): string {
     // ToDo: see how to get it
     return "not-implemented-yet-" + randomUUID();
-    //return block?.getFieldValue("")?.toString() ?? "unknown-transaction";
+    //return block?.getFieldValue("").toString() ?? "unknown-transaction";
   }
 
   getPartialBlockHashes(block: any): string[] {
     // Get the List of PartialBlocks
-    const partialBlocks = block?.getFieldValue("partial_blocks")?.vals ?? [];
+    const partialBlocks = block?.getFieldValue("partial_blocks").vals ?? [];
     const hashes: string[] = [];
 
     // Iterate over the PartialBlocks to get the hashes
     partialBlocks.forEach((partialBlock: any) => {
-      const blockHash = partialBlock?.structValue()?.getFieldValue("block_hash")?.structValue()
-        ?.getFieldValue("inner")?.hashValue()?.value?.toString("hex") ?? "";
+      const blockHash = partialBlock.structValue().getFieldValue("block_hash").structValue()
+        .getFieldValue("inner").hashValue().value.toString("hex") ?? "";
 
       if (blockHash) {
         hashes.push(blockHash);
@@ -281,6 +313,49 @@ export class PartisiaService {
     });
 
     return hashes;
+  }
+
+  /*** Methods to get properties from a PartialBlock ***/
+
+  getChainId(block: any): number {
+    return block?.getFieldValue("chain_id").number ?? -1;
+  }
+
+  getMempoolEpoch(block: any): number {
+    return block?.getFieldValue("mempool_epoch").innerValue?.asBN().toNumber() ?? -1;
+  }
+
+  getConfirmed(block: any): boolean {
+    return block?.getFieldValue("confirmed").value;
+  }
+
+  async fetchPartialBlock(abi: string, blockchainAddress: string, blockHash: string): Promise<any> {
+    const block = await this.partisiaConnection.call(
+      PBCChain.TESTNET,
+      abi,
+      blockchainAddress,
+      (_state, trees, namedTypes) => {  // trees --> property 'partial_chain_blocks' in PBC Explorer
+        const blockTree = trees[1](HashTypeSpec, namedTypes["PbcPartialChainBlock"], true);
+
+        // The values of the elements of the tree are the PartialBlocks.
+        // Find the applicable PartialBlock by filtering on field 'block_hash' of the Elements of the Tree
+        const blockTreeElement = blockTree.filter(element => element.value.structValue()?.
+          getFieldValue("block_hash")?.structValue()?.getFieldValue("inner")?.
+          hashValue()?.value?.toString("hex") === blockHash).pop();
+
+        return blockTreeElement?.value.structValue();
+      },
+      [1],
+    );
+
+    //const temp = this.registryContract.getBlochByNumber(3461);
+    //console.log(temp);
+
+    if (!block) {
+      this.logger.warn(`⭕ Block with hash ${blockHash} not found.`);
+    }
+
+    return block;
   }
 
 }
