@@ -3,28 +3,31 @@ import { Type } from 'class-transformer'; // For transforming values, e.g., stri
 
 export class CreatePartialChainBlockDto {
   @IsNumber()
-  height!: string;
-
-  @IsString()
-  blockHash!: string;  // Primary Key
-
-  @IsString()
-  masterBlockHash!: string;  // Foreign Key to table `master_chain_blocks`
+  chain_id!: number;
 
   @IsNumber()
-  mempoolEpoch!: number;
+  height!: number;
 
   @IsString()
-  txnRoot!: string;
+  block_hash!: string;  // Primary Key
 
   @IsString()
-  sourceTxnHash!: string;
+  master_block_hash!: string;  // Foreign Key to table `master_chain_blocks`
+
+  @IsNumber()
+  mempool_epoch!: number;
 
   @IsString()
-  commitTxnHash!: string;
+  txn_root!: string;
 
   @IsString()
-  commitProof!: string;
+  source_txn_hash!: string;
+
+  @IsString()
+  commit_txn_hash!: string;
+
+  @IsString()
+  commit_proof!: string;
 
   @IsBoolean()
   confirmed!: boolean;
