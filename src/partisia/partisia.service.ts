@@ -194,11 +194,11 @@ export class PartisiaService {
         //console.log(`>>> Tip of blockchain = ${tipHash}`);
 
         // Extract the block tree and find the last block by tip hash
-        // const latestBlock = await fetchBlock(blockchainAddress, tipHash); don't use this, but keep the function sync
         const blockTree = trees[this.treeId](HashTypeSpec, namedTypes["PbcMasterChainBlock"], true);
         const blockTreeElement = blockTree.filter(x => x.key.hashValue().value.toString("hex") === tipHash).pop();
         const latestBlock = blockTreeElement?.value.structValue();
 
+        /*
         const partialBlockHashes = this.getPartialBlockHashes(latestBlock);
         //console.log(`#PartialBlockHashes = ${partialBlockHashes.length}`);
         //console.log(partialBlockHashes);
@@ -218,6 +218,7 @@ export class PartisiaService {
           //console.log(`confirmed = ${confirmed}`);
           console.log(`latestPartialBlock: ${chainId}, ${mempool_epoch}, ${confirmed} : ${height} - ${hash}`);
         }
+        */
 
         return latestBlock;
       },
@@ -232,7 +233,7 @@ export class PartisiaService {
       PBCChain.TESTNET,
       abi,
       blockchainAddress,
-      (_state, trees, namedTypes) => {  // trees --> property 'blocks' in PBC Explorer
+      async (_state, trees, namedTypes) => {  // trees --> property 'blocks' in PBC Explorer
         const blockTree = trees[this.treeId](HashTypeSpec, namedTypes["PbcMasterChainBlock"], true);
         const blockTreeElement = blockTree.filter(x => x.key.hashValue().value.toString("hex") === blockHash).pop();
         return blockTreeElement?.value.structValue();
@@ -331,6 +332,32 @@ export class PartisiaService {
     return block?.getFieldValue("mempool_epoch").innerValue?.asBN().toNumber() ?? -1;
   }
 
+  getMasterBlockHash(block: any): string {
+    return this.GetHashFromFieldWithInner(block?.getFieldValue("master_block_hash"));
+  }
+
+  getTransactionRoot(block: any): string {
+    return this.GetHashFromFieldWithInner(block?.getFieldValue("execution_parts_root"));
+  }
+
+  getSourceTransactionHash(_block: any): string {
+    // ToDo: see how to get it
+    return "not-implemented-yet-" + randomUUID();
+    //return block?.getFieldValue("").toString() ?? "unknown-transaction";
+  }
+
+  getCommitTransactionHash(_block: any): string {
+    // ToDo: see how to get it
+    return "not-implemented-yet-" + randomUUID();
+    //return block?.getFieldValue("").toString() ?? "unknown-transaction";
+  }
+
+  getCommitProof(_block: any): string {
+    // ToDo: see how to get it
+    return "not-implemented-yet-" + randomUUID();
+    //return block?.getFieldValue("").toString() ?? "unknown-transaction";
+  }
+
   getConfirmed(block: any): boolean {
     return block?.getFieldValue("confirmed").value;
   }
@@ -340,7 +367,7 @@ export class PartisiaService {
       PBCChain.TESTNET,
       abi,
       blockchainAddress,
-      (_state, trees, namedTypes) => {  // trees --> property 'partial_chain_blocks' in PBC Explorer
+      async (_state, trees, namedTypes) => {  // trees --> property 'partial_chain_blocks' in PBC Explorer
         const blockTree = trees[1](HashTypeSpec, namedTypes["PbcPartialChainBlock"], true);
 
         // The values of the elements of the tree are the PartialBlocks.

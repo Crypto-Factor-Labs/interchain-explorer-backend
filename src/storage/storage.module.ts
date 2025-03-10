@@ -4,15 +4,17 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import { IndexerLockRepository } from './repositories/indexer-lock.repository.js';
 import { IndexerLock } from './entities/indexer-lock.entity.js';
-import { MASTER_CHAIN_BLOCK_REPOSITORY } from './repositories/master-chain-block.repository.js';
+import { MC_BLOCK_REPO } from './repositories/master-chain-block.repository.js';
 import { MasterChainBlockPostgresRepository } from './repositories/master-chain-block-postgres.repository.js';
 import { MasterChainBlockEntity } from './entities/master-chain-block.entity.js';
-// import { PartialChainBlock } from './entities/partial-chain-block.entity.js';
+import { PC_BLOCK_REPO } from './repositories/partial-chain-block.repository.js';
+import { PartialChainBlockPostgresRepository } from './repositories/partial-chain-block-postgres.repository.js';
+import { PartialChainBlockEntity } from './entities/partial-chain-block.entity.js';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),  // Ensure ConfigModule is imported and global
-    TypeOrmModule.forFeature([IndexerLock, MasterChainBlockEntity /*, PartialChainBlock*/]),
+    TypeOrmModule.forFeature([IndexerLock, MasterChainBlockEntity, PartialChainBlockEntity]),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule], // Import ConfigModule for dependency injection
       useFactory: async (configService: ConfigService) => {
@@ -24,7 +26,7 @@ import { MasterChainBlockEntity } from './entities/master-chain-block.entity.js'
           username: configService.get<string>('DB_USERNAME'),
           password: configService.get<string>('DB_PASSWORD'),
           database: configService.get<string>('DB_NAME'),
-          entities: [IndexerLock, MasterChainBlockEntity /*, PartialChainBlock*/],
+          entities: [IndexerLock, MasterChainBlockEntity, PartialChainBlockEntity],
           synchronize: false, // Should be false in production
         };
       },
@@ -34,11 +36,15 @@ import { MasterChainBlockEntity } from './entities/master-chain-block.entity.js'
   providers: [
     IndexerLockRepository,
     {
-      provide: MASTER_CHAIN_BLOCK_REPOSITORY,
+      provide: MC_BLOCK_REPO,
       useClass: MasterChainBlockPostgresRepository, // Default storage backend
     },
+    {
+      provide: PC_BLOCK_REPO,
+      useClass: PartialChainBlockPostgresRepository, // Default storage backend
+    },
   ],
-  exports: [IndexerLockRepository, MASTER_CHAIN_BLOCK_REPOSITORY],
+  exports: [IndexerLockRepository, MC_BLOCK_REPO, PC_BLOCK_REPO],
 })
 
 // Lifecycle hook to verify the database connection when the module initializes

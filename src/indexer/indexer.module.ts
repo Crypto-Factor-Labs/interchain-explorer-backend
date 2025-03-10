@@ -6,9 +6,10 @@ import { IndexerService } from './indexer.service.js';
 import { ScheduledIndexerService } from './scheduled-indexer.service.js';  // Scheduled Job
 import { PartisiaModule } from '../partisia/partisia.module.js';
 import { MasterChainModule } from '../master-chain/master-chain.module.js';
+import { PartialChainModule } from '../partial-chain/partial-chain.module.js';
 
 @Module({
-  imports: [StorageModule, PartisiaModule, MasterChainModule, TypeOrmModule.forFeature([IndexerLock])],
+  imports: [StorageModule, PartisiaModule, MasterChainModule, PartialChainModule, TypeOrmModule.forFeature([IndexerLock])],
   providers: [IndexerService, ScheduledIndexerService],
   exports: [IndexerService]
 })

@@ -1,7 +1,7 @@
 import { MasterChainBlockEntity } from '../entities/master-chain-block.entity.js';
 
 // Define a NestJS token for dependency injection
-export const MASTER_CHAIN_BLOCK_REPOSITORY = Symbol('MasterChainBlockRepository');
+export const MC_BLOCK_REPO = Symbol('MC_BlockRepo');
 
 export interface MasterChainBlockRepository {
   save(block: MasterChainBlockEntity): Promise<void>;

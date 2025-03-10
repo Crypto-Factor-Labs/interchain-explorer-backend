@@ -1,7 +1,9 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { PartisiaService } from '../partisia/partisia.service.js';
-import { MasterChainBlockRepository, MASTER_CHAIN_BLOCK_REPOSITORY } from '../storage/repositories/master-chain-block.repository.js';
+import { MasterChainBlockRepository, MC_BLOCK_REPO } from '../storage/repositories/master-chain-block.repository.js';
+import { PartialChainBlockRepository, PC_BLOCK_REPO } from '../storage/repositories/partial-chain-block.repository.js';
 import { MasterChainBlockEntity } from '../storage/entities/master-chain-block.entity.js';
+import { PartialChainBlockEntity } from '../storage/entities/partial-chain-block.entity.js';
 import { IndexerLockRepository } from '../storage/repositories/indexer-lock.repository.js';
 
 @Injectable()
@@ -9,12 +11,13 @@ export class IndexerService {
   private readonly logger = new Logger(IndexerService.name);
 
   constructor(
-    // Repository for interacting with block storage
-    @Inject(MASTER_CHAIN_BLOCK_REPOSITORY)
-    private readonly blockRepo: MasterChainBlockRepository,
+    @Inject(MC_BLOCK_REPO)  // Repository for interacting with MasterBlock storage
+    private readonly masterBlockRepo: MasterChainBlockRepository,
 
-    // Repository for interacting with Indexer-lock storage
-    @Inject(IndexerLockRepository)
+    @Inject(PC_BLOCK_REPO)  // Repository for interacting with PartialBlock storage
+    private readonly partialBlockRepo: PartialChainBlockRepository,
+
+    @Inject(IndexerLockRepository)  // Repository for interacting with Indexer-lock storage
     private readonly lockRepo: IndexerLockRepository,
 
     private readonly partisiaService: PartisiaService,
@@ -41,7 +44,7 @@ export class IndexerService {
     this.logger.log('🔒 Lock acquired, starting indexing job...');
 
     try {
-      let lastIndexedHeight = await this.blockRepo.getGreatestHeight();
+      let lastIndexedHeight = await this.masterBlockRepo.getGreatestHeight();
       //lastIndexedHeight = 1027;
 
       // Fetch the new blocks from the blockchain
@@ -49,12 +52,12 @@ export class IndexerService {
 
       // Index the new blocks
       for (const block of newBlocks) {
-        await this.indexBlock(block);
+        await this.indexMasterBlock(block);
       }
 
       if (newBlocks.length > 0) {
         this.logger.log(`🌟 ${(newBlocks).length} new block${newBlocks.length === 1 ? '' : 's'} indexed`);
-        this.logger.log(`>>> Last indexed height = ${await this.blockRepo.getGreatestHeight()}`);
+        this.logger.log(`>>> Last indexed height = ${await this.masterBlockRepo.getGreatestHeight()}`);
       }
     } catch (error) {
       this.logger.error('Error during indexing of blocks:', error);
@@ -70,7 +73,7 @@ export class IndexerService {
    * TEMP: Generate a unique height as increment from the maximum height present in storage.
    */
   async generateUniqueHeight(): Promise<number> {
-    const greatestHeight = await this.blockRepo.getGreatestHeight();
+    const greatestHeight = await this.masterBlockRepo.getGreatestHeight();
     return greatestHeight + 1;
   }
 
@@ -86,7 +89,7 @@ export class IndexerService {
   /**
    * Index a new block by saving it to storage.
    */
-  async indexBlock(block: any): Promise<void> {
+  async indexMasterBlock(block: any): Promise<void> {
     // Create a new block entity
     const entity = new MasterChainBlockEntity();
 
@@ -97,20 +100,11 @@ export class IndexerService {
     entity.block_mint_transaction = this.partisiaService.getMintTransaction(block);
     entity.date_indexed = new Date();  // Timestamp of when this block was indexed
 
-    this.indexPartialBlocks(block);
-
-    /*
-    console.log(`Indexing block
-      height: ${entity.height}
-      hash: ${entity.block_hash}
-      timestamp: ${entity.timestamp}
-      merkle_root: ${entity.merkle_root}
-      mint_transaction: ${entity.block_mint_transaction}`
-    );
-    */
-
     // Save the block to storage
-    await this.blockRepo.save(entity);
+    await this.masterBlockRepo.save(entity);
+
+    // Index the PartialBlocks that are related to the MasterBlock
+    await this.indexPartialBlocks(block);
 
     //console.log(`>>> Indexed MasterChainBlock - Height: ${entity.height}`);
   }
@@ -129,13 +123,30 @@ export class IndexerService {
 
     for (const blockHash of partialBlockHashes) {
       const partialBlock = await this.partisiaService.fetchPartialBlock(abi, blockchainAddress, blockHash);
-      const chainId = this.partisiaService.getChainId(partialBlock);
-      const height = this.partisiaService.getHeight(partialBlock);
-      const hash = this.partisiaService.getHash(partialBlock);
-      const mempool_epoch = this.partisiaService.getMempoolEpoch(partialBlock);
-      const confirmed = this.partisiaService.getConfirmed(partialBlock);
-      console.log(`>>> partialBlock: ${chainId}, ${mempool_epoch}, ${confirmed} : ${height} - ${hash}`);
+      await this.indexPartialBlock(partialBlock, this.partisiaService.getHash(masterBlock));
     }
+  }
+
+  async indexPartialBlock(block: any, masterBlockHash: string): Promise<void> {
+    // Create a new block entity
+    const entity = new PartialChainBlockEntity();
+
+    entity.chain_id = this.partisiaService.getChainId(block);
+    entity.height = this.partisiaService.getHeight(block);
+    entity.block_hash = this.partisiaService.getHash(block);
+    entity.master_block_hash = masterBlockHash;
+    entity.mempool_epoch = this.partisiaService.getMempoolEpoch(block);
+    entity.txn_root = this.partisiaService.getTransactionRoot(block);
+    entity.source_txn_hash = this.partisiaService.getSourceTransactionHash(block);
+    entity.commit_txn_hash = this.partisiaService.getCommitTransactionHash(block);
+    entity.commit_proof = this.partisiaService.getCommitProof(block);
+    entity.confirmed = this.partisiaService.getConfirmed(block);
+    entity.created_at = new Date();  // Timestamp of when this block was indexed
+
+    // Save the block to storage
+    await this.partialBlockRepo.save(entity);
+
+    console.log(`>>> Indexed PartialChainBlock : [${entity.chain_id}, ${entity.height}]`);
   }
 
   async dummyJob() {
