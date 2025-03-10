@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { PartialChainBlockEntity } from './partial-chain-block.entity.js';
 
 @Entity('master_chain_blocks')  // Table name
 export class MasterChainBlockEntity {
@@ -29,4 +30,8 @@ export class MasterChainBlockEntity {
 
   @Column('timestamp')
   created_at!: Date;
+
+  // Add the OneToMany relationship with PartialChainBlockEntity
+  @OneToMany(() => PartialChainBlockEntity, (partialBlock) => partialBlock.masterBlock)
+  partialBlocks!: PartialChainBlockEntity[];
 }

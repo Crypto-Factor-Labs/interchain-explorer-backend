@@ -43,13 +43,20 @@ export class MasterChainController {
   async getBlocks(
     @Query('nr') nr: number, // Number of blocks to retrieve
     @Query('skip') skip: number = 0, // Optional pagination offset (default to 0)
+    @Query('includePartialBlocks') includePartialBlocks: boolean = false, // Optional include PartialBlocks
   ) {
     // Validate `nr` parameter
     if (!nr || nr <= 0) {
       return { msg: 'Invalid number of blocks to retrieve' };
     }
 
-    return await this.masterChainService.getBlocks(nr, skip);
+    console.log(`nr = ${nr}, skip = ${skip}, includePartialBlocks = ${includePartialBlocks}`);
+
+    // Use parameter `includePartialBlocks` to determine which call to make
+    if (includePartialBlocks)
+      return await this.masterChainService.getBlocksIncludingPartialBlocks(nr, skip);
+    else
+      return await this.masterChainService.getBlocks(nr, skip);
   }
 
   // Retrieve all blocks

@@ -47,6 +47,16 @@ export class MasterChainService {
   }
 
   /**
+   * Retrieve X MasterChainBlocks including the related PartialChainBlocks from storage,
+   * starting with the latest block.
+   * @param nr Number of blocks to fetch
+   * @param skip Number of blocks to skip (for pagination)
+   */
+  async getBlocksIncludingPartialBlocks(nr: number, skip: number) {
+    return await this.repository.getBlocksIncludingPartialBlocks(nr, skip);
+  }
+
+  /**
    * Retrieve all indexed MasterChainBlocks.
    */
   async getAllBlocks(): Promise<MasterChainBlockEntity[]> {

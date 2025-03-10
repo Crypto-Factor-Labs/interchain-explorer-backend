@@ -1,5 +1,7 @@
+//import { Entity, PrimaryColumn, Column, Unique } from 'typeorm';
 import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn, Unique } from 'typeorm';
-import { MasterChainBlockEntity } from './master-chain-block.entity.js';
+//import { MasterChainBlockEntity } from './master-chain-block.entity.js';
+import type { MasterChainBlockEntity } from './master-chain-block.entity.js';
 
 @Entity('partial_chain_blocks')
 @Unique(["chain_id", "height"])  // Unique constraint on chain_id and height
@@ -45,7 +47,7 @@ export class PartialChainBlockEntity {
   created_at!: Date;
 
   // Define foreign key relationship with master_chain_blocks
-  @ManyToOne(() => MasterChainBlockEntity)
+  @ManyToOne('MasterChainBlockEntity', (masterBlock: MasterChainBlockEntity) => masterBlock.partialBlocks)
   @JoinColumn({ name: 'master_block_hash', referencedColumnName: 'block_hash' })
   masterBlock!: MasterChainBlockEntity;
 }

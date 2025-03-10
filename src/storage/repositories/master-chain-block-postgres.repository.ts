@@ -55,6 +55,15 @@ export class MasterChainBlockPostgresRepository implements MasterChainBlockRepos
     });
   }
 
+  async getBlocksIncludingPartialBlocks(take: number, skip: number): Promise<MasterChainBlockEntity[]> {
+    return this.repository.find({
+      take, // Number of blocks to retrieve
+      skip, // Offset for pagination
+      order: { height: 'DESC' }, // Order by block height in descending order (latest first)
+      relations: ['partialBlocks'], // Load the related PartialChainBlockEntity records
+    });
+  }
+
   async getAllBlocks(): Promise<MasterChainBlockEntity[]> {
     return this.repository.find();
   }

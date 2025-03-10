@@ -10,5 +10,6 @@ export interface MasterChainBlockRepository {
   getBlockByHash(block_hash: string): Promise<MasterChainBlockEntity | null>;
   getLatestBlock(): Promise<MasterChainBlockEntity | null>;
   getBlocks(take: number, skip: number): Promise<MasterChainBlockEntity[]>;
+  getBlocksIncludingPartialBlocks(take: number, skip: number): Promise<MasterChainBlockEntity[]>;
   getAllBlocks(): Promise<MasterChainBlockEntity[]>;
 }
