@@ -98,7 +98,7 @@ export class IndexerService {
     entity.timestamp = this.partisiaService.getTimestamp(block);
     entity.merkle_root = this.partisiaService.getMerkleRoot(block);
     entity.block_mint_transaction = this.partisiaService.getMintTransaction(block);
-    entity.date_indexed = new Date();  // Timestamp of when this block was indexed
+    entity.created_at = new Date();  // Timestamp of when this block was indexed
 
     // Save the block to storage
     await this.masterBlockRepo.save(entity);
@@ -110,7 +110,7 @@ export class IndexerService {
   }
 
   async indexPartialBlocks(masterBlock: any): Promise<void> {
-    console.log('>>> Indexing PartialBlocks...');
+    //console.log('>>> Indexing PartialBlocks...');
 
     // TEMPORARY !!!
     // This should be taken care of inside the PartisiaService.
@@ -119,7 +119,7 @@ export class IndexerService {
     const abi = await this.partisiaService.fetchAbi(blockchainAddress);
 
     const partialBlockHashes = this.partisiaService.getPartialBlockHashes(masterBlock);
-    console.log(`#PartialBlockHashes = ${partialBlockHashes.length}`);
+    //console.log(`#PartialBlockHashes = ${partialBlockHashes.length}`);
 
     for (const blockHash of partialBlockHashes) {
       const partialBlock = await this.partisiaService.fetchPartialBlock(abi, blockchainAddress, blockHash);

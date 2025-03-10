@@ -28,5 +28,5 @@ export class MasterChainBlockEntity {
   block_mint_transaction!: string;
 
   @Column('timestamp')
-  date_indexed!: Date;
+  created_at!: Date;
 }
