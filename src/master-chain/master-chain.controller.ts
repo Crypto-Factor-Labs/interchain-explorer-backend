@@ -50,8 +50,6 @@ export class MasterChainController {
       return { msg: 'Invalid number of blocks to retrieve' };
     }
 
-    console.log(`nr = ${nr}, skip = ${skip}, includePartialBlocks = ${includePartialBlocks}`);
-
     // Use parameter `includePartialBlocks` to determine which call to make
     if (includePartialBlocks)
       return await this.masterChainService.getBlocksIncludingPartialBlocks(nr, skip);
