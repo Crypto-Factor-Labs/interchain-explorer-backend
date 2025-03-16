@@ -32,6 +32,7 @@
     "@unleashed-business/opendapps-cloud-nest-commons": "^2.11.3",
     "@unleashed-business/opendapps-cloud-ts-commons": "^6.8.0-beta.2",
     "@unleashed-business/ts-web3-commons": "^6.3.0-beta.2",
+    "joi": "^17.13.3",
     "nestjs-command": "^3.1.4",
     "pg": "^8.13.1",
     "reflect-metadata": "^0.1.13",

@@ -1,6 +1,6 @@
 import { Module, OnModuleInit, Logger } from '@nestjs/common';
 import { TypeOrmModule, } from '@nestjs/typeorm';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import { IndexerLockRepository } from './repositories/indexer-lock.repository.js';
 import { IndexerLock } from './entities/indexer-lock.entity.js';
@@ -13,16 +13,13 @@ import { PartialChainBlockEntity } from './entities/partial-chain-block.entity.j
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),  // Ensure ConfigModule is imported and global
     TypeOrmModule.forFeature([IndexerLock, MasterChainBlockEntity, PartialChainBlockEntity]),
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule], // Import ConfigModule for dependency injection
       useFactory: async (configService: ConfigService) => {
-        const dbPort = configService.get<string>('DB_PORT');
         return {
           type: 'postgres',
           host: configService.get<string>('DB_HOST'),
-          port: dbPort ? +dbPort : 5432,  // Use + to convert dbPort into a number, using 5432 as fallback
+          port: configService.get<number>('DB_PORT'),
           username: configService.get<string>('DB_USERNAME'),
           password: configService.get<string>('DB_PASSWORD'),
           database: configService.get<string>('DB_NAME'),
