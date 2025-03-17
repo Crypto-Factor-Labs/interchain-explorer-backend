@@ -98,7 +98,7 @@ export class IndexerService {
     entity.timestamp = this.partisiaService.getTimestamp(block);
     entity.merkle_root = this.partisiaService.getMerkleRoot(block);
     entity.block_mint_transaction = this.partisiaService.getMintTransaction(block);
-    entity.created_at = new Date();  // Timestamp of when this block was indexed
+    entity.indexed_at = new Date();  // Timestamp of when this block was indexed
 
     // Save the block to storage
     await this.masterBlockRepo.save(entity);
@@ -141,7 +141,7 @@ export class IndexerService {
     entity.commit_txn_hash = this.partisiaService.getCommitTransactionHash(block);
     entity.commit_proof = this.partisiaService.getCommitProof(block);
     entity.confirmed = this.partisiaService.getConfirmed(block);
-    entity.created_at = new Date();  // Timestamp of when this block was indexed
+    entity.indexed_at = new Date();  // Timestamp of when this block was indexed
 
     // Save the block to storage
     await this.partialBlockRepo.save(entity);

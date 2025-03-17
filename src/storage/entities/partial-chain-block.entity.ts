@@ -44,7 +44,7 @@ export class PartialChainBlockEntity {
   confirmed!: boolean;
 
   @Column('timestamp')
-  created_at!: Date;
+  indexed_at!: Date;
 
   // Define foreign key relationship with master_chain_blocks
   @ManyToOne('MasterChainBlockEntity', (masterBlock: MasterChainBlockEntity) => masterBlock.partialBlocks)

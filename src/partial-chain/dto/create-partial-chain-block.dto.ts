@@ -34,5 +34,5 @@ export class CreatePartialChainBlockDto {
 
   @IsDate()
   @Type(() => Date)  // Use class-transformer to convert string to Date
-  created_at!: Date;
+  indexed_at!: Date;
 }

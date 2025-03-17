@@ -23,7 +23,7 @@ export class PartialChainBlockPostgresRepository implements PartialChainBlockRep
       commit_txn_hash: block.commit_txn_hash,
       commit_proof: block.commit_proof,
       confirmed: block.confirmed,
-      created_at: block.created_at
+      indexed_at: block.indexed_at
     });
   }
 

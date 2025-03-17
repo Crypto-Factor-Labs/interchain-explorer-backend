@@ -20,5 +20,5 @@ export class CreateMasterChainBlockDto {
 
   @IsDate()
   @Type(() => Date)
-  created_at!: Date;
+  indexed_at!: Date;
 }

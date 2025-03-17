@@ -29,7 +29,7 @@ export class MasterChainBlockEntity {
   block_mint_transaction!: string;
 
   @Column('timestamp')
-  created_at!: Date;
+  indexed_at!: Date;
 
   // Add the OneToMany relationship with PartialChainBlockEntity
   @OneToMany(() => PartialChainBlockEntity, (partialBlock) => partialBlock.masterBlock)

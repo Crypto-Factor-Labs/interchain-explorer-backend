@@ -18,7 +18,7 @@ export class MasterChainBlockPostgresRepository implements MasterChainBlockRepos
       timestamp: block.timestamp,
       merkle_root: block.merkle_root,
       block_mint_transaction: block.block_mint_transaction,
-      created_at: block.created_at,
+      indexed_at: block.indexed_at,
     });
   }
 
