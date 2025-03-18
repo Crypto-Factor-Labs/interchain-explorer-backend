@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule, } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
 import { StorageModule } from './storage/storage.module.js';
 import { IndexerModule } from './indexer/indexer.module.js';
 import { MasterChainModule } from './master-chain/master-chain.module.js';
+import { DATA_SOURCE_OPTIONS } from './data-source.js';
 import Joi from 'joi';
 
 @Module({
@@ -16,6 +18,7 @@ import Joi from 'joi';
         APP_PORT: Joi.number().min(1).max(65535).default(3000),
       }),
     }),
+    TypeOrmModule.forRoot(DATA_SOURCE_OPTIONS),  // For triggering migration if applicable
     ScheduleModule.forRoot(),  // For scheduling jobs
     StorageModule,             // Storage configuration and entities
     IndexerModule,             // Indexer functionality

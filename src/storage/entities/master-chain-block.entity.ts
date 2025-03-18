@@ -1,11 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Entity, Column, OneToMany, PrimaryColumn } from 'typeorm';
 import { PartialChainBlockEntity } from './partial-chain-block.entity.js';
 
 @Entity('master_chain_blocks')  // Table name
 export class MasterChainBlockEntity {
 
-  @PrimaryGeneratedColumn('uuid')  // Let the database automatically generate UUIDs
-  id!: string;
+  @PrimaryColumn('text')
+  block_hash!: string;  // Primary Key
 
   @Column({
     type: 'bigint',
@@ -15,9 +15,6 @@ export class MasterChainBlockEntity {
     },
   })
   height!: number;
-
-  @Column('text')
-  block_hash!: string;
 
   @Column('timestamp')
   timestamp!: Date;
