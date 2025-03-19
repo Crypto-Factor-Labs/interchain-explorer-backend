@@ -7,7 +7,7 @@
   "license": "UNLICENSED",
   "type": "module",
   "scripts": {
-    "build": "nest build",
+    "build": "rollup -c",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -31,7 +31,10 @@
     "@nestjs/typeorm": "^11.0.0",
     "@unleashed-business/opendapps-cloud-nest-commons": "^2.11.3",
     "@unleashed-business/opendapps-cloud-ts-commons": "^6.8.0-beta.2",
-    "@unleashed-business/ts-web3-commons": "^6.3.0-beta.2",
+    "@unleashed-business/ts-web3-commons": "^6.3.0-beta.37",
+    "@partisiablockchain/abi-client": "5.102.0",
+    "web3": "^4.16.0",
+    "bignumber.js": "^9.1.2",
     "joi": "^17.13.3",
     "nestjs-command": "^3.1.4",
     "pg": "^8.13.1",
@@ -60,7 +63,10 @@
     "ts-loader": "^9.4.3",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "rollup": "^4.12.0",
+    "rollup-plugin-typescript2": "^0.36.0",
+    "@rollup/plugin-terser": "^0.4.4"
   },
   "jest": {
     "moduleFileExtensions": [

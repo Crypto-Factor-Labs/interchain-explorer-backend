@@ -42,7 +42,7 @@
     "noPropertyAccessFromIndexSignature": true,
     "downlevelIteration": true,
     "experimentalDecorators": true,
-    "preserveSymlinks": true
+    "preserveSymlinks": true,
   },
   "include": [
     "src/**/*.ts"

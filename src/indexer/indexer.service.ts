@@ -47,20 +47,20 @@ export class IndexerService {
       let lastIndexedHeight = await this.masterBlockRepo.getGreatestHeight();
       //lastIndexedHeight = 1027;
 
-      // Fetch the new blocks from the blockchain
+      // Fetch the new blocks from the blockchain/
+        // TODO: Should really be in parts to not flood memory
       const newBlocks = await this.partisiaService.fetchMasterBlocks(lastIndexedHeight);
-
       // Index the new blocks
       for (const block of newBlocks) {
-        await this.indexMasterBlock(block);
+          await this.indexMasterBlock(block);
       }
 
       if (newBlocks.length > 0) {
         this.logger.log(`🌟 ${(newBlocks).length} new block${newBlocks.length === 1 ? '' : 's'} indexed`);
         this.logger.log(`>>> Last indexed height = ${await this.masterBlockRepo.getGreatestHeight()}`);
       }
-    } catch (error) {
-      this.logger.error('Error during indexing of blocks:', error);
+    } catch (error: any) {
+      this.logger.error('Error during indexing of blocks:', error?.stackTrace ?? error?.message);
     } finally {
       // Release the lock after the job is done
       await this.lockRepo.releaseLock();
@@ -114,17 +114,16 @@ export class IndexerService {
 
     // TEMPORARY !!!
     // This should be taken care of inside the PartisiaService.
-    const forkNr = await this.partisiaService.fetchActiveForkNr();
-    const blockchainAddress = await this.partisiaService.fetchBlockchainAddress(forkNr);
-    const abi = await this.partisiaService.fetchAbi(blockchainAddress);
+    const blockchainAddress = await this.partisiaService.fetchActiveForkAddressByHeight(this.partisiaService.getHeightBN(masterBlock));
 
-    const partialBlockHashes = this.partisiaService.getPartialBlockHashes(masterBlock);
+    const partialBlocks = this.partisiaService.getPartialBlockHashes(masterBlock);
     //console.log(`#PartialBlockHashes = ${partialBlockHashes.length}`);
 
-    for (const blockHash of partialBlockHashes) {
-      const partialBlock = await this.partisiaService.fetchPartialBlock(abi, blockchainAddress, blockHash);
-      await this.indexPartialBlock(partialBlock, this.partisiaService.getHash(masterBlock));
-    }
+    await Promise.all(partialBlocks.map(async minimalPartialBlock => {
+      return this.partisiaService
+          .fetchPartialBlock(blockchainAddress, minimalPartialBlock.chainId, minimalPartialBlock.hash)
+          .then(partialBlock => this.indexPartialBlock(partialBlock, this.partisiaService.getHash(masterBlock)));
+    }));
   }
 
   async indexPartialBlock(block: any, masterBlockHash: string): Promise<void> {
