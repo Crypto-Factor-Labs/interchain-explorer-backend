@@ -48,11 +48,11 @@ export class IndexerService {
       //lastIndexedHeight = 1027;
 
       // Fetch the new blocks from the blockchain/
-        // TODO: Should really be in parts to not flood memory
+      // TODO: Should really be in parts to not flood memory
       const newBlocks = await this.partisiaService.fetchMasterBlocks(lastIndexedHeight);
       // Index the new blocks
       for (const block of newBlocks) {
-          await this.indexMasterBlock(block);
+        await this.indexMasterBlock(block);
       }
 
       if (newBlocks.length > 0) {
@@ -112,17 +112,15 @@ export class IndexerService {
   async indexPartialBlocks(masterBlock: any): Promise<void> {
     //console.log('>>> Indexing PartialBlocks...');
 
-    // TEMPORARY !!!
-    // This should be taken care of inside the PartisiaService.
-    const blockchainAddress = await this.partisiaService.fetchActiveForkAddressByHeight(this.partisiaService.getHeightBN(masterBlock));
+    const [_forkNr, forkAddress] = await this.partisiaService.fetchForkByHeight(this.partisiaService.getHeightBN(masterBlock));
+    const partialBlockHashes = this.partisiaService.getPartialBlockHashes(masterBlock);
+    //const partialBlockHashes = this.partisiaService.getPartialBlockHashes(forkNr, masterBlock);
+    //console.log(`#PartialBlockHashes = ${partialBlockHashes.length}, forkNr = ${forkNr}`);
 
-    const partialBlocks = this.partisiaService.getPartialBlockHashes(masterBlock);
-    //console.log(`#PartialBlockHashes = ${partialBlockHashes.length}`);
-
-    await Promise.all(partialBlocks.map(async minimalPartialBlock => {
+    await Promise.all(partialBlockHashes.map(async minimalPartialBlock => {
       return this.partisiaService
-          .fetchPartialBlock(blockchainAddress, minimalPartialBlock.chainId, minimalPartialBlock.hash)
-          .then(partialBlock => this.indexPartialBlock(partialBlock, this.partisiaService.getHash(masterBlock)));
+        .fetchPartialBlock(forkAddress, minimalPartialBlock.chainId, minimalPartialBlock.hash)
+        .then(partialBlock => this.indexPartialBlock(partialBlock, this.partisiaService.getHash(masterBlock)));
     }));
   }
 
