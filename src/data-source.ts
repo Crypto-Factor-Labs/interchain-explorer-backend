@@ -1,5 +1,5 @@
 import { DataSourceOptions } from "typeorm";
-import { IndexerLock } from './storage/entities/indexer-lock.entity.js';
+import { IndexerLockEntity } from './storage/entities/indexer-lock.entity.js';
 import { MasterChainBlockEntity } from './storage/entities/master-chain-block.entity.js';
 import { PartialChainBlockEntity } from './storage/entities/partial-chain-block.entity.js';
 import { CreateInterchainSchema_1710765072069 } from "./storage/migration/create-interchain-schema-1710765072069.js";
@@ -16,7 +16,7 @@ export const DATA_SOURCE_OPTIONS: DataSourceOptions = {
   database: process.env["DB_NAME"]!,
   synchronize: false,
   logging: false,
-  entities: [IndexerLock, MasterChainBlockEntity, PartialChainBlockEntity],
+  entities: [IndexerLockEntity, MasterChainBlockEntity, PartialChainBlockEntity],
   migrations: [CreateInterchainSchema_1710765072069],
   migrationsRun: true,
 };

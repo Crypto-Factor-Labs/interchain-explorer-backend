@@ -1,7 +1,7 @@
 import { Entity, PrimaryColumn, Column } from 'typeorm';
 
 @Entity('indexer_lock')  // Table name
-export class IndexerLock {
+export class IndexerLockEntity {
   @PrimaryColumn()
   job_name!: string;
 

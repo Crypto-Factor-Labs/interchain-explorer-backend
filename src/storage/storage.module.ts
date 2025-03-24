@@ -3,7 +3,7 @@ import { TypeOrmModule, } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import { IndexerLockRepository } from './repositories/indexer-lock.repository.js';
-import { IndexerLock } from './entities/indexer-lock.entity.js';
+import { IndexerLockEntity } from './entities/indexer-lock.entity.js';
 import { MC_BLOCK_REPO } from './repositories/master-chain-block.repository.js';
 import { MasterChainBlockPostgresRepository } from './repositories/master-chain-block-postgres.repository.js';
 import { MasterChainBlockEntity } from './entities/master-chain-block.entity.js';
@@ -13,7 +13,7 @@ import { PartialChainBlockEntity } from './entities/partial-chain-block.entity.j
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([IndexerLock, MasterChainBlockEntity, PartialChainBlockEntity]),
+    TypeOrmModule.forFeature([IndexerLockEntity, MasterChainBlockEntity, PartialChainBlockEntity]),
     TypeOrmModule.forRootAsync({
       useFactory: async (configService: ConfigService) => {
         return {
@@ -23,7 +23,7 @@ import { PartialChainBlockEntity } from './entities/partial-chain-block.entity.j
           username: configService.get<string>('DB_USERNAME'),
           password: configService.get<string>('DB_PASSWORD'),
           database: configService.get<string>('DB_NAME'),
-          entities: [IndexerLock, MasterChainBlockEntity, PartialChainBlockEntity],
+          entities: [IndexerLockEntity, MasterChainBlockEntity, PartialChainBlockEntity],
           synchronize: false, // Should be false in production
         };
       },

@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IndexerLock } from '../entities/indexer-lock.entity.js';
+import { IndexerLockEntity } from '../entities/indexer-lock.entity.js';
 
 @Injectable()
 export class IndexerLockRepository {
   constructor(
     // Inject the repository for IndexerLock
-    @InjectRepository(IndexerLock)
-    private readonly lockRepo: Repository<IndexerLock>,
+    @InjectRepository(IndexerLockEntity)
+    private readonly lockRepo: Repository<IndexerLockEntity>,
   ) { }
 
   /**
