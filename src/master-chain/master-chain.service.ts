@@ -53,7 +53,16 @@ export class MasterChainService {
    * @param skip Number of blocks to skip (for pagination)
    */
   async getBlocksIncludingPartialBlocks(nr: number, skip: number) {
-    return await this.repository.getBlocksIncludingPartialBlocks(nr, skip);
+    const blocks = await this.repository.getBlocksIncludingPartialBlocks(nr, skip);
+
+    // Sort the PartialBlocks for each MasterBlock by chain_id
+    blocks.forEach(block => {
+      if (block.partialBlocks) {
+        block.partialBlocks.sort((a, b) => a.chain_id - b.chain_id);
+      }
+    });
+
+    return blocks;
   }
 
   /**
