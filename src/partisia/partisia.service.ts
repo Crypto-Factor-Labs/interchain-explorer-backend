@@ -45,7 +45,7 @@ export class PartisiaService {
 
   /** Fetch data from the Partisia BlockChain */
 
-  async fetchMasterBlocks(lastIndexedHeight: number): Promise<any[]> {
+  async fetchMasterBlocks(lastIndexedHeight: BN): Promise<any[]> {
     let blocks: any[] = [];
     let forkNr = await this.fetchActiveForkNr();
 
@@ -80,7 +80,7 @@ export class PartisiaService {
     return blocks;
   }
 
-  private async fetchNewMasterBlocks(forkNr: number, blockchainAddress: string, lastIndexedHeight: number, indexingTip: string | undefined): Promise<[any[], string | undefined]> {
+  private async fetchNewMasterBlocks(forkNr: number, blockchainAddress: string, lastIndexedHeight: BN, indexingTip: string | undefined): Promise<[any[], string | undefined]> {
     let blocks: any[] = [];  // Array to collect blocks for the current fork
 
     // Start with the latest block of the blockchain
@@ -88,7 +88,7 @@ export class PartisiaService {
       ? await this.fetchLatestMasterBlock(blockchainAddress)
       : await this.fetchMasterBlock(blockchainAddress, indexingTip);
     let blockHeight = this.getHeight(block);
-    const backlog = blockHeight - lastIndexedHeight;
+    const backlog = blockHeight.sub(lastIndexedHeight).toNumber();
     let lastTip: string | undefined = undefined;
 
     if (backlog > 0) {
@@ -105,8 +105,8 @@ export class PartisiaService {
         //  break;
 
         // Check if we reached the Genesis block
-        if (blockHeight === 0) {
-          this.logger.log("✅ Reached the Genenis block (height = 0). All blocks fetched!");
+        if (blockHeight.isZero()) {
+          this.logger.log("✅ Reached the Genenis block (height = 0). All MasterBlocks fetched!");
           break;
         }
 
@@ -115,12 +115,12 @@ export class PartisiaService {
         block = await this.fetchMasterBlock(blockchainAddress, prevBlockHash);
 
         if (!block) {
-          console.log(`>>> Block not found for hash: ${prevBlockHash}. End of fork ${forkNr} reached.`);
+          console.log(`>>> No MasterBlock found for hash: ${prevBlockHash}. End of fork ${forkNr} reached.`);
         } else {
-          blockHeight--;
+          blockHeight = blockHeight.subn(1);
 
           // Stop if the block is already indexed
-          if (blockHeight <= lastIndexedHeight) {
+          if (blockHeight.lte(lastIndexedHeight)) {
             lastTip = "";  // Prevent from trying the previous fork
             break;
           }
@@ -297,7 +297,7 @@ export class PartisiaService {
    * As an example of how a single property can be fetched from the latest block on the blockchain.
    * Don't expect this to be used.
    */
-  async fetchLatestMasterBlockHeight(blockchainAddress: string): Promise<number> {
+  async fetchLatestMasterBlockHeight(blockchainAddress: string): Promise<BN> {
     try {
       const latestBlock = await this.fetchLatestMasterBlock(blockchainAddress);
 
@@ -313,7 +313,7 @@ export class PartisiaService {
    * Retrieves the hash value from a given field's "inner" property and returns it as a hexadecimal string.
    *
    * @param {any} fieldValue - The object containing the field from which the hash is to be extracted.
-   * @returns {string} - The hexadecimal representation of the hash if available, or `"???"` if the field or hash is not found.
+   * @returns {string} - The hexadecimal representation of the hash if available, or `""` if the field or hash is not found.
    */
   GetHashFromFieldWithInner(fieldValue: any) {
     return fieldValue?.structValue()?.getFieldValue("inner")?.hashValue().value.toString("hex") ?? "";
@@ -321,12 +321,7 @@ export class PartisiaService {
 
   /*** Methods to get properties from a Master- or PartialBlock ***/
 
-  //TODO: number is not good for height, needs to be BN
-  getHeight(block: any): number {
-    return block?.getFieldValue("height").asBN().toNumber() ?? -1;
-  }
-
-  getHeightBN(block: any): BN {
+  getHeight(block: any): BN {
     return block?.getFieldValue("height").asBN() ?? new BN(-1);
   }
 
@@ -354,35 +349,6 @@ export class PartisiaService {
     return "not-implemented-yet-" + randomUUID();
     //return block?.getFieldValue("").toString() ?? "unknown-transaction";
   }
-
-  /*
-  getPartialBlockHashes(forkNr: number, block: any): { chainId: number, hash: string }[] {
-    // Get the List of PartialBlocks
-    const partialBlocks = block?.getFieldValue("partial_blocks").vals ?? [];
-    const hashes: { chainId: number, hash: string }[] = [];
-
-    // Iterate over the PartialBlocks to get the hashes.
-    // Note that early forks (<=1) have a different structure!
-    partialBlocks.forEach((partialBlock: any) => {
-      let chainId = -1;
-      let hash = "";
-
-      if (forkNr > 1) {
-        chainId = partialBlock.structValue().getFieldValue("chain_id")?.asNumber();
-        hash = this.GetHashFromFieldWithInner(partialBlock.structValue().getFieldValue("block_hash"));
-      } else { // Early forks
-        chainId = 1131;  // chain_id is not present, default to 1131
-        hash = partialBlock.getFieldValue("inner")?.hashValue().value.toString("hex") ?? "???"
-      }
-
-      if (hash) {
-        hashes.push({ chainId: chainId, hash: hash });
-      }
-    });
-
-    return hashes;
-  }
-  */
 
   getPartialBlockHashes(block: any): { chainId: number, hash: string }[] {
     // Get the List of PartialBlocks

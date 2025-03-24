@@ -1,5 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { MasterChainService } from './master-chain.service.js';
+import BN from 'bn.js'
 
 @Controller('api/masterchain')
 export class MasterChainController {
@@ -26,13 +27,14 @@ export class MasterChainController {
     // Check if the identifier is a number (height) or string (hash)
     const isHeight = !isNaN(Number(id));
     if (isHeight) {
-      block = await this.masterChainService.getBlockByHeight(Number(id));
+      const height = new BN(id, 10); // Convert id to BN using base 10
+      block = await this.masterChainService.getBlockByHeight(height);
     } else {
       block = await this.masterChainService.getBlockByHash(id);
     }
 
     if (!block) {
-      return { msg: `No block found with ${isHeight ? 'height' : 'hash'} ${id}` };
+      return { msg: `No MasterBlock found with ${isHeight ? 'height' : 'hash'} ${id}` };
     }
 
     return block;

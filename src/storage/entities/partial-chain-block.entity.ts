@@ -1,7 +1,6 @@
-//import { Entity, PrimaryColumn, Column, Unique } from 'typeorm';
 import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn, Unique } from 'typeorm';
-//import { MasterChainBlockEntity } from './master-chain-block.entity.js';
 import type { MasterChainBlockEntity } from './master-chain-block.entity.js';
+import BN from 'bn.js';
 
 @Entity('partial_chain_blocks')
 @Unique(["chain_id", "height"])  // Unique constraint on chain_id and height
@@ -13,11 +12,11 @@ export class PartialChainBlockEntity {
   @Column({
     type: 'bigint',
     transformer: {
-      to: (value: number) => value,
-      from: (value: string) => parseInt(value, 10),
+      to: (value: BN): string => value.toString(),
+      from: (value: string): BN => new BN(value, 10),
     },
   })
-  height!: number;
+  height!: BN;
 
   @PrimaryColumn('text')
   block_hash!: string;  // Primary Key

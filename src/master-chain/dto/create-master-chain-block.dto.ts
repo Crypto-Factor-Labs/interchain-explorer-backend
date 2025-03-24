@@ -1,9 +1,10 @@
 import { IsString, IsNumber, IsDate } from 'class-validator';  // Import class-validator decorators
 import { Type } from 'class-transformer'; // For transforming values, e.g., strings to dates
+import BN from 'bn.js';
 
 export class CreateMasterChainBlockDto {
   @IsNumber()
-  height!: number;
+  height!: BN;
 
   @IsString()
   block_hash!: string;  // Primary Key

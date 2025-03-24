@@ -1,5 +1,6 @@
 import { Entity, Column, OneToMany, PrimaryColumn } from 'typeorm';
 import { PartialChainBlockEntity } from './partial-chain-block.entity.js';
+import BN from 'bn.js';
 
 @Entity('master_chain_blocks')  // Table name
 export class MasterChainBlockEntity {
@@ -10,11 +11,11 @@ export class MasterChainBlockEntity {
   @Column({
     type: 'bigint',
     transformer: {
-      to: (value: number) => value,
-      from: (value: string) => parseInt(value, 10),
+      to: (value: BN): string => value.toString(),
+      from: (value: string): BN => new BN(value, 10),
     },
   })
-  height!: number;
+  height!: BN;
 
   @Column('timestamp')
   timestamp!: Date;

@@ -1,6 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { MasterChainBlockRepository, MC_BLOCK_REPO } from '../storage/repositories/master-chain-block.repository.js';
 import { MasterChainBlockEntity } from '../storage/entities/master-chain-block.entity.js';
+import BN from 'bn.js';
 
 @Injectable()
 export class MasterChainService {
@@ -12,14 +13,14 @@ export class MasterChainService {
   /**
    * Retrieve the highest MasterChainBlock height in storage.
    */
-  async getGreatestHeight(): Promise<number> {
+  async getGreatestHeight(): Promise<BN> {
     return this.repository.getGreatestHeight();
   }
 
   /**
    * Retrieve a MasterChainBlock by its height.
    */
-  async getBlockByHeight(height: number): Promise<MasterChainBlockEntity | null> {
+  async getBlockByHeight(height: BN): Promise<MasterChainBlockEntity | null> {
     return this.repository.getBlockByHeight(height);
   }
 

@@ -3,6 +3,7 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MasterChainBlockEntity } from '../entities/master-chain-block.entity.js';
 import { MasterChainBlockRepository } from './master-chain-block.repository.js';
+import BN from 'bn.js';
 
 @Injectable()
 export class MasterChainBlockPostgresRepository implements MasterChainBlockRepository {
@@ -22,17 +23,17 @@ export class MasterChainBlockPostgresRepository implements MasterChainBlockRepos
     });
   }
 
-  async getGreatestHeight(): Promise<number> {
+  async getGreatestHeight(): Promise<BN> {
     const block = await this.repository.findOne({
       where: {},
       select: ['height'],
       order: { height: 'DESC' },
     });
 
-    return block ? block.height : -1;
+    return block ? block.height : new BN(-1);
   }
 
-  async getBlockByHeight(height: number): Promise<MasterChainBlockEntity | null> {
+  async getBlockByHeight(height: BN): Promise<MasterChainBlockEntity | null> {
     return this.repository.findOne({ where: { height } });
   }
 

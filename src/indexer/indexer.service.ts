@@ -45,6 +45,7 @@ export class IndexerService {
 
     try {
       let lastIndexedHeight = await this.masterBlockRepo.getGreatestHeight();
+
       //lastIndexedHeight = 1027;
 
       // Fetch the new blocks from the blockchain/
@@ -66,15 +67,6 @@ export class IndexerService {
       await this.lockRepo.releaseLock();
       this.logger.log('🔓 Lock released, indexing job completed!');
     }
-  }
-
-
-  /**
-   * TEMP: Generate a unique height as increment from the maximum height present in storage.
-   */
-  async generateUniqueHeight(): Promise<number> {
-    const greatestHeight = await this.masterBlockRepo.getGreatestHeight();
-    return greatestHeight + 1;
   }
 
   /**
@@ -112,7 +104,7 @@ export class IndexerService {
   async indexPartialBlocks(masterBlock: any): Promise<void> {
     //console.log('>>> Indexing PartialBlocks...');
 
-    const [_forkNr, forkAddress] = await this.partisiaService.fetchForkByHeight(this.partisiaService.getHeightBN(masterBlock));
+    const [_forkNr, forkAddress] = await this.partisiaService.fetchForkByHeight(this.partisiaService.getHeight(masterBlock));
     const partialBlockHashes = this.partisiaService.getPartialBlockHashes(masterBlock);
     //const partialBlockHashes = this.partisiaService.getPartialBlockHashes(forkNr, masterBlock);
     //console.log(`#PartialBlockHashes = ${partialBlockHashes.length}, forkNr = ${forkNr}`);
