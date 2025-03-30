@@ -7,6 +7,7 @@ import BN from 'bn.js';
 
 @Injectable()
 export class MasterChainBlockPostgresRepository implements MasterChainBlockRepository {
+
   constructor(
     @InjectRepository(MasterChainBlockEntity)
     private readonly repository: Repository<MasterChainBlockEntity>,
@@ -67,5 +68,21 @@ export class MasterChainBlockPostgresRepository implements MasterChainBlockRepos
 
   async getAllBlocks(): Promise<MasterChainBlockEntity[]> {
     return this.repository.find();
+  }
+
+  async getAvgBlockSpeed_24hr(): Promise<string> {
+    const result = await this.repository.query(`
+        SELECT
+          CONCAT(
+            FLOOR(AVG(EXTRACT(EPOCH FROM (b.timestamp - a.timestamp))) / 60), 'm ',
+            ROUND(AVG(EXTRACT(EPOCH FROM (b.timestamp - a.timestamp))) % 60), 's'
+          ) AS avg_block_speed_24hr
+        FROM master_chain_blocks a
+        JOIN master_chain_blocks b ON a.height = b.height - 1
+        WHERE a.timestamp >= NOW() - INTERVAL '24 hours'
+          AND b.timestamp >= NOW() - INTERVAL '24 hours';
+      `);
+
+    return result[0].avg_block_speed_24hr;
   }
 }

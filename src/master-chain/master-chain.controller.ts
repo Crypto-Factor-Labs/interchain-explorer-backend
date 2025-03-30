@@ -34,7 +34,7 @@ export class MasterChainController {
     }
 
     if (!block) {
-      return { msg: `No MasterBlock found with ${isHeight ? 'height' : 'hash'} ${id}` };
+      return { msg: `No MasterBlock found with ${isHeight ? 'height' : 'hash'} ${id}.` };
     }
 
     return block;
@@ -49,7 +49,7 @@ export class MasterChainController {
   ) {
     // Validate `nr` parameter
     if (!nr || nr <= 0) {
-      return { msg: 'Invalid number of blocks to retrieve' };
+      return { msg: 'Invalid number of blocks to retrieve.' };
     }
 
     // Use parameter `includePartialBlocks` to determine which call to make

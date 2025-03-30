@@ -46,7 +46,8 @@ export class IndexerService {
     try {
       let lastIndexedHeight = await this.masterBlockRepo.getGreatestHeight();
 
-      //lastIndexedHeight = 1027;
+      //const avgBlockSpeed = await this.masterBlockRepo.getAvgBlockSpeed_24hr();
+      //console.log(`>>> avgBlockSpeed = ${avgBlockSpeed}`);
 
       // Fetch the new blocks from the blockchain/
       // TODO: Should really be in parts to not flood memory
