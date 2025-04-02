@@ -15,13 +15,23 @@ export class StatisticsController {
     }
   }
 
+  // Retrieve cfrPriceUSD only
+  @Get('cfr-price-usd')
+  async getCFRpriceUSD() {
+    try {
+      return { cfrPriceUSD: await this.statisticsService.getCFRpriceUSD() };
+    } catch (error) {
+      return { msg: 'Error retrieving cfrPriceUSD.', error };
+    }
+  }
+
   // Retrieve AvgBlockSpeed_24hr only
   @Get('avg-block-speed-24hr')
   async getAvgBlockSpeed_24hr() {
     try {
       return { avgBlockSpeed_24hr: await this.statisticsService.getAvgBlockSpeed_24hr() };
     } catch (error) {
-      return { msg: 'Error retrieving AvgBlockSpeed_24hr', error };
+      return { msg: 'Error retrieving AvgBlockSpeed_24hr.', error };
     }
   }
 
