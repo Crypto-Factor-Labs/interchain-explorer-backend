@@ -25,6 +25,16 @@ export class StatisticsController {
     }
   }
 
+  // Retrieve cfrTvlUSD only
+  @Get('cfr-tvl-usd')
+  async getCFRtvlUSD() {
+    try {
+      return { cfrTvlUSD: await this.statisticsService.getCFRtvlUSD() };
+    } catch (error) {
+      return { msg: 'Error retrieving cfrPriceUSD.', error };
+    }
+  }
+
   // Retrieve AvgBlockSpeed_24hr only
   @Get('avg-block-speed-24hr')
   async getAvgBlockSpeed_24hr() {

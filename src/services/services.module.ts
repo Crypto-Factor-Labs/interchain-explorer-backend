@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { TokenPriceService } from './token-price.service.js';
+import { GeckoTerminalService } from './gecko-terminal.service.js';
 
 @Module({
-  providers: [TokenPriceService],
-  exports: [TokenPriceService],
+  providers: [GeckoTerminalService],
+  exports: [GeckoTerminalService],
 })
 export class ServicesModule { }
