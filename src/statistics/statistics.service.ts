@@ -32,9 +32,15 @@ export class StatisticsService {
     return avgBlockSpeed;
   }
 
+  async getAvgBlockSpeed_30d(): Promise<string> {
+    const avgBlockSpeed = await this.masterBlockRepo.getAvgBlockSpeed_30d();
+    return avgBlockSpeed;
+  }
+
   // Main method to fetch all statistics in one call
   async getAllStatistics(): Promise<any> {
     const avgblockSpeed_24hr = await this.getAvgBlockSpeed_24hr();
+    const avgblockSpeed_30d = await this.getAvgBlockSpeed_30d();
     const cfrPriceUSD = await this.getCFRpriceUSD();
     const cfrTvlUSD = await this.getCFRtvlUSD();
     //const transactionCount = await this.getTransactionCount();
@@ -42,6 +48,7 @@ export class StatisticsService {
     // Return all statistics in a single object
     return {
       avgBlockSpeed_24hr: avgblockSpeed_24hr,
+      avgBlockSpeed_30d: avgblockSpeed_30d,
       cfrPriceUSD: cfrPriceUSD,
       cfrTvlUSD: cfrTvlUSD,
       //transactionCount: transactionCount,

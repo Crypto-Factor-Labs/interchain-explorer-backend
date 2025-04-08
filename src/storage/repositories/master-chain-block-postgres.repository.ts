@@ -71,18 +71,26 @@ export class MasterChainBlockPostgresRepository implements MasterChainBlockRepos
   }
 
   async getAvgBlockSpeed_24hr(): Promise<string> {
+    return await this.getAvgBlockSpeed('24 hours');
+  }
+
+  async getAvgBlockSpeed_30d(): Promise<string> {
+    return await this.getAvgBlockSpeed('30 days');
+  }
+
+  async getAvgBlockSpeed(period: string): Promise<string> {
     const result = await this.repository.query(`
         SELECT
           CONCAT(
             FLOOR(AVG(EXTRACT(EPOCH FROM (b.timestamp - a.timestamp))) / 60), 'm ',
-            ROUND(AVG(EXTRACT(EPOCH FROM (b.timestamp - a.timestamp))) % 60), 's'
-          ) AS avg_block_speed_24hr
+            LPAD(ROUND(AVG(EXTRACT(EPOCH FROM (b.timestamp - a.timestamp))) % 60)::TEXT, 2, '0'), 's'
+          ) AS avg_block_speed
         FROM master_chain_blocks a
         JOIN master_chain_blocks b ON a.height = b.height - 1
-        WHERE a.timestamp >= NOW() - INTERVAL '24 hours'
-          AND b.timestamp >= NOW() - INTERVAL '24 hours';
+        WHERE a.timestamp >= NOW() - INTERVAL '${period}'
+          AND b.timestamp >= NOW() - INTERVAL '${period}';
       `);
 
-    return result[0].avg_block_speed_24hr;
+    return result[0].avg_block_speed;
   }
 }

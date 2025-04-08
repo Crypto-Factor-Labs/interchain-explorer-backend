@@ -13,5 +13,6 @@ export interface MasterChainBlockRepository {
   getBlocks(take: number, skip: number): Promise<MasterChainBlockEntity[]>;
   getBlocksIncludingPartialBlocks(take: number, skip: number): Promise<MasterChainBlockEntity[]>;
   getAvgBlockSpeed_24hr(): Promise<string>;
+  getAvgBlockSpeed_30d(): Promise<string>;
   getAllBlocks(): Promise<MasterChainBlockEntity[]>;
 }
