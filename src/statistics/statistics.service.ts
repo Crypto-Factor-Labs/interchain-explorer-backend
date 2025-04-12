@@ -47,10 +47,10 @@ export class StatisticsService {
 
     // Return all statistics in a single object
     return {
-      avgBlockSpeed_24hr: avgblockSpeed_24hr,
-      avgBlockSpeed_30d: avgblockSpeed_30d,
-      cfrPriceUSD: cfrPriceUSD,
-      cfrTvlUSD: cfrTvlUSD,
+      avg_block_speed_24hr: avgblockSpeed_24hr,
+      avg_block_speed_30d: avgblockSpeed_30d,
+      cfr_price_usd: cfrPriceUSD,
+      cfr_tvl_usd: cfrTvlUSD,
       //transactionCount: transactionCount,
     };
   }
