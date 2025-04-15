@@ -38,7 +38,7 @@ export class StatisticsService {
   }
 
   // Main method to fetch all statistics in one call
-  async getAllStatistics(): Promise<any> {
+  async getStatistics(): Promise<any> {
     const avgblockSpeed_24hr = await this.getAvgBlockSpeed_24hr();
     const avgblockSpeed_30d = await this.getAvgBlockSpeed_30d();
     const cfrPriceUSD = await this.getCFRpriceUSD();
