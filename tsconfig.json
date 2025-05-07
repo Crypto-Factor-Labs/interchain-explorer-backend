@@ -43,6 +43,10 @@
     "downlevelIteration": true,
     "experimentalDecorators": true,
     "preserveSymlinks": true,
+    "typeRoots": [
+      "node_modules/@types",
+      "src/types"
+    ],
   },
   "include": [
     "src/**/*.ts"

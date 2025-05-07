@@ -2,7 +2,8 @@ import { DataSourceOptions } from "typeorm";
 import { IndexerLockEntity } from './storage/entities/indexer-lock.entity.js';
 import { MasterChainBlockEntity } from './storage/entities/master-chain-block.entity.js';
 import { PartialChainBlockEntity } from './storage/entities/partial-chain-block.entity.js';
-import { CreateInterchainSchema_1710765072069 } from "./storage/migration/create-interchain-schema-1710765072069.js";
+import { CfrPriceHistoryEntity } from "./storage/entities/cfr-price-history.entity.js";
+import { join } from 'path';
 import * as dotenv from "dotenv";
 dotenv.config();
 
@@ -16,7 +17,10 @@ export const DATA_SOURCE_OPTIONS: DataSourceOptions = {
   database: process.env["DB_NAME"]!,
   synchronize: false,
   logging: false,
-  entities: [IndexerLockEntity, MasterChainBlockEntity, PartialChainBlockEntity],
-  migrations: [CreateInterchainSchema_1710765072069],
+  //logging: ['query', 'error'],
+  entities: [IndexerLockEntity, MasterChainBlockEntity, PartialChainBlockEntity, CfrPriceHistoryEntity],
+  // Execute the migrations in lexicograpic order of the filenames in dist/storage/migration/
+  migrations: [
+    join(process.cwd(), 'dist', 'storage', 'migration', '*.js')],
   migrationsRun: true,
 };

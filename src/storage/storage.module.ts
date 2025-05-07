@@ -2,18 +2,24 @@ import { Module, OnModuleInit, Logger } from '@nestjs/common';
 import { TypeOrmModule, } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
+
 import { IndexerLockRepository } from './repositories/indexer-lock.repository.js';
 import { IndexerLockEntity } from './entities/indexer-lock.entity.js';
+
 import { MC_BLOCK_REPO } from './repositories/master-chain-block.repository.js';
 import { MasterChainBlockPostgresRepository } from './repositories/master-chain-block-postgres.repository.js';
 import { MasterChainBlockEntity } from './entities/master-chain-block.entity.js';
+
 import { PC_BLOCK_REPO } from './repositories/partial-chain-block.repository.js';
 import { PartialChainBlockPostgresRepository } from './repositories/partial-chain-block-postgres.repository.js';
 import { PartialChainBlockEntity } from './entities/partial-chain-block.entity.js';
 
+import { CfrPriceHistoryRepository } from './repositories/cfr-price-history.repository.js';
+import { CfrPriceHistoryEntity } from './entities/cfr-price-history.entity.js';
+
 @Module({
   imports: [
-    TypeOrmModule.forFeature([IndexerLockEntity, MasterChainBlockEntity, PartialChainBlockEntity]),
+    TypeOrmModule.forFeature([IndexerLockEntity, MasterChainBlockEntity, PartialChainBlockEntity, CfrPriceHistoryEntity]),
     TypeOrmModule.forRootAsync({
       useFactory: async (configService: ConfigService) => {
         return {
@@ -23,7 +29,7 @@ import { PartialChainBlockEntity } from './entities/partial-chain-block.entity.j
           username: configService.get<string>('DB_USERNAME'),
           password: configService.get<string>('DB_PASSWORD'),
           database: configService.get<string>('DB_NAME'),
-          entities: [IndexerLockEntity, MasterChainBlockEntity, PartialChainBlockEntity],
+          entities: [IndexerLockEntity, MasterChainBlockEntity, PartialChainBlockEntity, CfrPriceHistoryEntity],
           synchronize: false, // Should be false in production
         };
       },
@@ -40,8 +46,9 @@ import { PartialChainBlockEntity } from './entities/partial-chain-block.entity.j
       provide: PC_BLOCK_REPO,
       useClass: PartialChainBlockPostgresRepository, // Default storage backend
     },
+    CfrPriceHistoryRepository,
   ],
-  exports: [IndexerLockRepository, MC_BLOCK_REPO, PC_BLOCK_REPO],
+  exports: [IndexerLockRepository, MC_BLOCK_REPO, PC_BLOCK_REPO, CfrPriceHistoryRepository],
 })
 
 // Lifecycle hook to verify the database connection when the module initializes
