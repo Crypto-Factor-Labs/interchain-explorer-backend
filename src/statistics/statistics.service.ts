@@ -80,5 +80,15 @@ export class StatisticsService {
     await this.cache.set(this.KEY_CFR_DATA, data, { ttl: this.TTL_CFR_DATA });
     return data;
   }
+
+  async getCfrPriceHistory(
+    minutes = 60
+  ): Promise<Array<{ timestamp: Date; price_usd: string }>> {
+    const rows = await this.cfrRepo.findRecent(minutes);
+    return rows.map(r => ({
+      timestamp: r.timestamp,
+      price_usd: r.priceUsd,
+    }));
+  }
 }
 
