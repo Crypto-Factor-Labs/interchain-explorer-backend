@@ -6,6 +6,8 @@ import { PartialChainBlockRepository, PC_BLOCK_REPO } from '../storage/repositor
 import { MasterChainBlockEntity } from '../storage/entities/master-chain-block.entity.js';
 import { PartialChainBlockEntity } from '../storage/entities/partial-chain-block.entity.js';
 import { IndexerLockRepository } from '../storage/repositories/indexer-lock.repository.js';
+import { MasterBlockSummary } from '../types/masterblock.types.js';
+import BN from 'bn.js';
 
 @Injectable()
 export class IndexerService {
@@ -47,6 +49,7 @@ export class IndexerService {
 
     try {
       let lastIndexedHeight = await this.masterBlockRepo.getGreatestHeight();
+      lastIndexedHeight = new BN(0);  // Reset to 0 for testing purposes
 
       //const avgBlockSpeed = await this.masterBlockRepo.getAvgBlockSpeed_24hr();
       //console.log(`>>> avgBlockSpeed = ${avgBlockSpeed}`);
@@ -55,6 +58,9 @@ export class IndexerService {
       this.logger.debug(`>>> Last indexed height = ${lastIndexedHeight}`);
       this.logger.debug(`>>> Latest height on ReaderNode = ${latestHeight}`);
 
+      this.indexNewBlocks(lastIndexedHeight, latestHeight);
+
+      /*
       // Fetch the new blocks from the blockchain/
       // TODO: Should really be in parts to not flood memory
       const newBlocks = await this.partisiaService.fetchMasterBlocks(lastIndexedHeight);
@@ -67,8 +73,9 @@ export class IndexerService {
         this.logger.log(`🌟 ${(newBlocks).length} new block${newBlocks.length === 1 ? '' : 's'} indexed`);
         this.logger.log(`>>> Last indexed height = ${await this.masterBlockRepo.getGreatestHeight()}`);
       }
+        */
     } catch (error: any) {
-      this.logger.error('Error during indexing of blocks:', error?.stackTrace ?? error?.message);
+      this.logger.error('🛑 Error during indexing of blocks:', error?.stackTrace ?? error?.message);
     } finally {
       // Release the lock after the job is done
       await this.lockRepo.releaseLock();
@@ -76,34 +83,50 @@ export class IndexerService {
     }
   }
 
-  /**
-   * Manually trigger a block index (for testing purposes).
-   *
-  async indexBlockManually() {
-    const blockData = await this.generateBlockData();
-    await this.indexBlock(blockData);
-    this.logger.log('>>> Manually indexed a new block!');
+  async indexNewBlocks(lastIndexedHeight: BN, latestHeight: BN,): Promise<void> {
+    let height = lastIndexedHeight.addn(1); // lastIndexedHeight + 1
+
+    while (height.lte(latestHeight)) {
+      try {
+        const block = await this.rnService.fetchMasterBlock(height);
+        await this.indexMasterBlock(block);
+        this.logger.debug(`Indexed block at height ${height.toString()}`);
+      } catch (error) {
+        this.logger.error(`🛑 Failed to index block at height ${height.toString()}:`, error);
+        throw error; // Stop indexing to avoid gaps
+      }
+      height = height.addn(1);
+    }
+
+    const nrOfBlocks = latestHeight.sub(lastIndexedHeight);
+    if (nrOfBlocks.gt(new BN(0))) {
+      this.logger.log(`🌟 ${nrOfBlocks.toString()} new block${nrOfBlocks.eq(new BN(1)) ? '' : 's'} indexed`);
+      this.logger.log(`>>> Last indexed height = ${await this.masterBlockRepo.getGreatestHeight()}`);
+    }
   }
 
   /**
    * Index a new block by saving it to storage.
    */
-  async indexMasterBlock(block: any): Promise<void> {
+  async indexMasterBlock(block: MasterBlockSummary): Promise<void> {
     // Create a new block entity
     const entity = new MasterChainBlockEntity();
 
-    entity.height = this.partisiaService.getHeight(block);
-    entity.block_hash = this.partisiaService.getHash(block);
-    entity.timestamp = this.partisiaService.getTimestamp(block);
-    entity.merkle_root = this.partisiaService.getMerkleRoot(block);
-    entity.block_mint_transaction = this.partisiaService.getMintTransaction(block);
+    entity.height = new BN(block.height);
+    entity.block_hash = block.blockHash;
+    entity.timestamp = new Date(block.timestamp); // Convert from number (ms) if needed
+    entity.merkle_root = block.partialBlockRoot;
+    entity.block_mint_transaction = block.transactions?.[0]?.transactionHash ?? ''; // First tx hash
     entity.indexed_at = new Date();  // Timestamp of when this block was indexed
 
+    //console.log(`>>> Indexing MasterChainBlock | Height: ${entity.height}, Hash: ${entity.block_hash}`);
+    //console.log(entity);
+
     // Save the block to storage
-    await this.masterBlockRepo.save(entity);
+    //await this.masterBlockRepo.save(entity);
 
     // Index the PartialBlocks that are related to the MasterBlock
-    await this.indexPartialBlocks(block);
+    //await this.indexPartialBlocks(block);
 
     //console.log(`>>> Indexed MasterChainBlock - Height: ${entity.height}`);
   }

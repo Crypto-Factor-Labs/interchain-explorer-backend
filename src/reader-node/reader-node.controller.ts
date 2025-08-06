@@ -1,6 +1,7 @@
 import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
 import { ReaderNodeService } from './reader-node.service.js';
 import type { MasterBlockSummary, MasterBlock } from '../types/masterblock.types.js';
+import BN from 'bn.js';
 
 @Controller('reader-node')
 export class ReaderNodeController {
@@ -19,6 +20,6 @@ export class ReaderNodeController {
   async getMasterBlock(
     @Param('height', ParseIntPipe) height: number,
   ): Promise<MasterBlock> {
-    return this.readerNodeService.fetchMasterBlock(height);
+    return this.readerNodeService.fetchMasterBlock(new BN(height));
   }
 }

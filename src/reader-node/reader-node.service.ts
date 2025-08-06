@@ -3,6 +3,7 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import type { MasterBlockSummary, MasterBlock } from '../types/masterblock.types.js';
+import BN from 'bn.js';
 
 @Injectable()
 export class ReaderNodeService {
@@ -29,8 +30,12 @@ export class ReaderNodeService {
    * Fetch a full MasterBlock by height (format=3)
    * @param height - The height of the block to fetch
    */
-  async fetchMasterBlock(height: number): Promise<MasterBlock> {
-    const url = `${this.baseUrl}/master-block?height=${height}&format=3`;
+  async fetchMasterBlock(height: BN): Promise<MasterBlock> {
+    const heightNumber = height.toNumber();
+    if (!Number.isSafeInteger(heightNumber)) {
+      throw new Error(`🛑 Height ${height.toString()} is too large to safely convert to number`);
+    }
+    const url = `${this.baseUrl}/master-block?height=${heightNumber}&format=3`;
     const response = await firstValueFrom(this.httpService.get<MasterBlock>(url));
     return response.data;
   }
@@ -39,8 +44,8 @@ export class ReaderNodeService {
    * Fetch the latest MasterBlock height
    * @returns The height of the latest MasterBlock
    */
-  async getLatestHeight(): Promise<number> {
+  async getLatestHeight(): Promise<BN> {
     const summary = await this.fetchMasterBlockSummary();
-    return summary.height;
+    return new BN(summary.height);
   }
 }
