@@ -19,6 +19,7 @@ import Joi from 'joi';
       validationSchema: Joi.object({
         DB_PORT: Joi.number().min(1).max(65535).default(5432),
         APP_PORT: Joi.number().min(1).max(65535).default(3000),
+        READER_NODE_URL: Joi.string().uri().required(),
       }),
     }),
     TypeOrmModule.forRoot(DATA_SOURCE_OPTIONS),  // For triggering migration if applicable

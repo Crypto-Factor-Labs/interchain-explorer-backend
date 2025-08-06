@@ -1,5 +1,6 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { PartisiaService } from '../partisia/partisia.service.js';
+import { ReaderNodeService } from '../reader-node/reader-node.service.js';
 import { MasterChainBlockRepository, MC_BLOCK_REPO } from '../storage/repositories/master-chain-block.repository.js';
 import { PartialChainBlockRepository, PC_BLOCK_REPO } from '../storage/repositories/partial-chain-block.repository.js';
 import { MasterChainBlockEntity } from '../storage/entities/master-chain-block.entity.js';
@@ -21,6 +22,7 @@ export class IndexerService {
     private readonly lockRepo: IndexerLockRepository,
 
     private readonly partisiaService: PartisiaService,
+    private readonly rnService: ReaderNodeService,
   ) { }
 
   // Trigger block indexing when the application starts.
@@ -48,6 +50,10 @@ export class IndexerService {
 
       //const avgBlockSpeed = await this.masterBlockRepo.getAvgBlockSpeed_24hr();
       //console.log(`>>> avgBlockSpeed = ${avgBlockSpeed}`);
+
+      const latestHeight = await this.rnService.getLatestHeight();
+      this.logger.debug(`>>> Last indexed height = ${lastIndexedHeight}`);
+      this.logger.debug(`>>> Latest height on ReaderNode = ${latestHeight}`);
 
       // Fetch the new blocks from the blockchain/
       // TODO: Should really be in parts to not flood memory
