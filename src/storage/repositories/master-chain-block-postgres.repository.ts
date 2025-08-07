@@ -81,10 +81,14 @@ export class MasterChainBlockPostgresRepository implements MasterChainBlockRepos
   async getAvgBlockSpeed(period: string): Promise<string> {
     const result = await this.repository.query(`
         SELECT
-          CONCAT(
-            FLOOR(AVG(EXTRACT(EPOCH FROM (b.timestamp - a.timestamp))) / 60), 'm ',
-            LPAD(ROUND(AVG(EXTRACT(EPOCH FROM (b.timestamp - a.timestamp))) % 60)::TEXT, 2, '0'), 's'
-          ) AS avg_block_speed
+          CASE
+            WHEN AVG(EXTRACT(EPOCH FROM (b.timestamp - a.timestamp))) IS NULL THEN 'N/A'
+            ELSE
+              CONCAT(
+                FLOOR(AVG(EXTRACT(EPOCH FROM (b.timestamp - a.timestamp))) / 60), 'm ',
+                LPAD(ROUND(AVG(EXTRACT(EPOCH FROM (b.timestamp - a.timestamp))) % 60)::TEXT, 2, '0'), 's'
+              )
+          END AS avg_block_speed
         FROM master_chain_blocks a
         JOIN master_chain_blocks b ON a.height = b.height - 1
         WHERE a.timestamp >= NOW() - INTERVAL '${period}'
