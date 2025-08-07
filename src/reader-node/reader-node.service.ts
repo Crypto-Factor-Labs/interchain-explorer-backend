@@ -3,6 +3,7 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import type { MasterBlockSummary, MasterBlock } from '../types/masterblock.types.js';
+import type { PartialBlock } from '../types/partialblock.types.js';
 import BN from 'bn.js';
 
 @Injectable()
@@ -20,7 +21,7 @@ export class ReaderNodeService {
   /**
    * Fetch the summary of the latest MasterBlock (format=1)
    */
-  async fetchMasterBlockSummary(): Promise<MasterBlockSummary> {
+  async fetchLatestMasterBlock(): Promise<MasterBlockSummary> {
     const url = `${this.baseUrl}/master-block?format=1`;
     const response = await firstValueFrom(this.httpService.get<MasterBlockSummary>(url));
     return response.data;
@@ -41,11 +42,22 @@ export class ReaderNodeService {
   }
 
   /**
+   * Fetch a PartialBlock by chain ID and hash (format=3)
+   * @param chainId - The ID of the chain
+   * @param hash - The hash of the block to fetch
+   */
+  async fetchPartialBlock(chainId: number, hash: string): Promise<PartialBlock> {
+    const url = `${this.baseUrl}/partial-block/${chainId}?hash=${hash}&format=3`;
+    const response = await firstValueFrom(this.httpService.get<PartialBlock>(url));
+    return response.data;
+  }
+
+  /**
    * Fetch the latest MasterBlock height
    * @returns The height of the latest MasterBlock
    */
   async getLatestHeight(): Promise<BN> {
-    const summary = await this.fetchMasterBlockSummary();
+    const summary = await this.fetchLatestMasterBlock();
     return new BN(summary.height);
   }
 }

@@ -7,11 +7,11 @@ import BN from 'bn.js';
 export class ReaderNodeController {
   constructor(private readonly readerNodeService: ReaderNodeService) { }
 
-  // GET /reader-node/master-block/summary (format=1)
-  // Fetch the summary of the latest MasterBlock (format=1)
-  @Get('master-block/summary')
-  async getMasterBlockSummary(): Promise<MasterBlockSummary> {
-    return this.readerNodeService.fetchMasterBlockSummary();
+  // GET /reader-node/master-block/latest (format=1)
+  // Fetch the summary of the latest MasterBlock
+  @Get('master-block/latest')
+  async getLatestMasterBlock(): Promise<MasterBlockSummary> {
+    return this.readerNodeService.fetchLatestMasterBlock();
   }
 
   // GET /reader-node/master-block/:height (format=3)
