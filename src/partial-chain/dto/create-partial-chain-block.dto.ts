@@ -1,18 +1,18 @@
 import { IsString, IsNumber, IsDate, IsBoolean } from 'class-validator';
-import { Type } from 'class-transformer'; // For transforming values, e.g., strings to dates
+import { Type } from 'class-transformer';
 
 export class CreatePartialChainBlockDto {
   @IsNumber()
   chain_id!: number;
 
-  @IsNumber()
-  height!: number;
+  @IsString() // decimal string; convert to BN in service
+  height!: string;
 
   @IsString()
-  block_hash!: string;  // Primary Key
+  block_hash!: string;
 
   @IsString()
-  master_block_hash!: string;  // Foreign Key to table `master_chain_blocks`
+  master_block_hash!: string;
 
   @IsNumber()
   mempool_epoch!: number;
@@ -33,6 +33,6 @@ export class CreatePartialChainBlockDto {
   confirmed!: boolean;
 
   @IsDate()
-  @Type(() => Date)  // Use class-transformer to convert string to Date
+  @Type(() => Date)
   indexed_at!: Date;
 }

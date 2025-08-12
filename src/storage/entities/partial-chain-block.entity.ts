@@ -3,26 +3,27 @@ import type { MasterChainBlockEntity } from './master-chain-block.entity.js';
 import BN from 'bn.js';
 
 @Entity('partial_chain_blocks')
-@Unique(["chain_id", "height"])  // Unique constraint on chain_id and height
-
+@Unique(['chain_id', 'height']) // chain_id + height unique
 export class PartialChainBlockEntity {
   @Column('int')
   chain_id!: number;
 
   @Column({
-    type: 'bigint',
+    type: 'numeric',
+    precision: 78,
+    scale: 0,
     transformer: {
-      to: (value: BN): string => value.toString(),
-      from: (value: string): BN => new BN(value, 10),
+      to: (value: BN): string => value.toString(10),   // DB gets decimal string
+      from: (value: string): BN => new BN(value, 10),  // app gets BN
     },
   })
   height!: BN;
 
   @PrimaryColumn('text')
-  block_hash!: string;  // Primary Key
+  block_hash!: string; // PK
 
   @Column('text')
-  master_block_hash!: string;  // Foreign Key to table `master_chain_blocks`
+  master_block_hash!: string; // FK to master_chain_blocks.block_hash
 
   @Column('int')
   mempool_epoch!: number;
@@ -42,11 +43,14 @@ export class PartialChainBlockEntity {
   @Column('boolean', { default: false })
   confirmed!: boolean;
 
-  @Column('timestamp')
+  @Column('timestamptz')
   indexed_at!: Date;
 
-  // Define foreign key relationship with master_chain_blocks
-  @ManyToOne('MasterChainBlockEntity', (masterBlock: MasterChainBlockEntity) => masterBlock.partialBlocks)
+  @ManyToOne(
+    'MasterChainBlockEntity',
+    (master: MasterChainBlockEntity) => master.partialBlocks,
+    { onDelete: 'CASCADE' },
+  )
   @JoinColumn({ name: 'master_block_hash', referencedColumnName: 'block_hash' })
   masterBlock!: MasterChainBlockEntity;
 }

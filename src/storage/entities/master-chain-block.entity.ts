@@ -1,23 +1,24 @@
 import { Entity, Column, OneToMany, PrimaryColumn } from 'typeorm';
-import { PartialChainBlockEntity } from './partial-chain-block.entity.js';
+import type { PartialChainBlockEntity } from './partial-chain-block.entity.js';
 import BN from 'bn.js';
 
-@Entity('master_chain_blocks')  // Table name
+@Entity('master_chain_blocks')
 export class MasterChainBlockEntity {
-
   @PrimaryColumn('text')
-  block_hash!: string;  // Primary Key
+  block_hash!: string;
 
   @Column({
-    type: 'bigint',
+    type: 'numeric',
+    precision: 78,
+    scale: 0,
     transformer: {
-      to: (value: BN): string => value.toString(),
-      from: (value: string): BN => new BN(value, 10),
+      to: (value: BN): string => value.toString(10),   // DB gets decimal string
+      from: (value: string): BN => new BN(value, 10),  // app gets BN
     },
   })
   height!: BN;
 
-  @Column('timestamp')
+  @Column('timestamptz')
   timestamp!: Date;
 
   @Column('text')
@@ -26,10 +27,12 @@ export class MasterChainBlockEntity {
   @Column('text')
   block_mint_transaction!: string;
 
-  @Column('timestamp')
+  @Column('timestamptz')
   indexed_at!: Date;
 
-  // Add the OneToMany relationship with PartialChainBlockEntity
-  @OneToMany(() => PartialChainBlockEntity, (partialBlock) => partialBlock.masterBlock)
+  @OneToMany(
+    'PartialChainBlockEntity',
+    (partial: PartialChainBlockEntity) => partial.masterBlock,
+  )
   partialBlocks!: PartialChainBlockEntity[];
 }
