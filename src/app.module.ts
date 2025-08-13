@@ -6,6 +6,7 @@ import { StorageModule } from './storage/storage.module.js';
 import { IndexerModule } from './indexer/indexer.module.js';
 import { ReaderNodeModule } from './reader-node/reader-node.module.js';
 import { MasterChainModule } from './master-chain/master-chain.module.js';
+import { TransactionModule } from './transaction/transaction.module.js';
 import { StatisticsModule } from './statistics/statistics.module.js';
 import { ServicesModule } from './services/services.module.js';
 import { DATA_SOURCE_OPTIONS } from './data-source.js';
@@ -28,6 +29,7 @@ import Joi from 'joi';
     IndexerModule,             // Indexer functionality
     ReaderNodeModule,          // ReaderNode interaction
     MasterChainModule,         // MasterChain Business Logic and Controller
+    TransactionModule,         // Transaction Business Logic and Controller
     StatisticsModule,          // Statistics
     ServicesModule,
   ],
