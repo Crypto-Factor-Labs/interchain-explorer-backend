@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { MasterChainBlockRepository, MC_BLOCK_REPO } from '../storage/repositories/master-chain-block.repository.js';
+import { MC_BLOCK_REPO, MasterChainBlockRepository } from '../storage/repositories/master-chain-block.repository.js';
 import { CfrPriceHistoryRepository } from '../storage/repositories/cfr-price-history.repository.js';
 
 export interface Statistics {

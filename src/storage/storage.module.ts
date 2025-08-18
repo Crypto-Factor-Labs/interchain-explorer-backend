@@ -14,12 +14,21 @@ import { PC_BLOCK_REPO } from './repositories/partial-chain-block.repository.js'
 import { PartialChainBlockPostgresRepository } from './repositories/partial-chain-block-postgres.repository.js';
 import { PartialChainBlockEntity } from './entities/partial-chain-block.entity.js';
 
+import { TX_REPO } from './repositories/transaction.repository.js';
+import { TransactionPostgresRepository } from './repositories/transaction-postgres.repository.js';
+import { TransactionEntity } from './entities/transaction.entity.js';
+
+import { EXEC_PART_REPO } from './repositories/execution-part.repository.js';
+import { ExecutionPartPostgresRepository } from './repositories/execution-part-postgres.repository.js';
+import { ExecutionPartEntity } from './entities/execution-part.entity.js';
+
 import { CfrPriceHistoryRepository } from './repositories/cfr-price-history.repository.js';
 import { CfrPriceHistoryEntity } from './entities/cfr-price-history.entity.js';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([IndexerLockEntity, MasterChainBlockEntity, PartialChainBlockEntity, CfrPriceHistoryEntity]),
+    TypeOrmModule.forFeature([IndexerLockEntity, MasterChainBlockEntity, PartialChainBlockEntity,
+      TransactionEntity, ExecutionPartEntity, CfrPriceHistoryEntity]),
     TypeOrmModule.forRootAsync({
       useFactory: async (configService: ConfigService) => {
         return {
@@ -38,17 +47,14 @@ import { CfrPriceHistoryEntity } from './entities/cfr-price-history.entity.js';
   ],
   providers: [
     IndexerLockRepository,
-    {
-      provide: MC_BLOCK_REPO,
-      useClass: MasterChainBlockPostgresRepository, // Default storage backend
-    },
-    {
-      provide: PC_BLOCK_REPO,
-      useClass: PartialChainBlockPostgresRepository, // Default storage backend
-    },
+    { provide: MC_BLOCK_REPO, useClass: MasterChainBlockPostgresRepository },
+    { provide: PC_BLOCK_REPO, useClass: PartialChainBlockPostgresRepository },
+    { provide: TX_REPO, useClass: TransactionPostgresRepository },
+    { provide: EXEC_PART_REPO, useClass: ExecutionPartPostgresRepository },
     CfrPriceHistoryRepository,
   ],
-  exports: [IndexerLockRepository, MC_BLOCK_REPO, PC_BLOCK_REPO, CfrPriceHistoryRepository],
+  exports: [IndexerLockRepository, MC_BLOCK_REPO, PC_BLOCK_REPO,
+    TX_REPO, EXEC_PART_REPO, CfrPriceHistoryRepository],
 })
 
 // Lifecycle hook to verify the database connection when the module initializes
