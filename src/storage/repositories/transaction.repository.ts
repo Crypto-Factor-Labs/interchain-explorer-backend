@@ -5,7 +5,7 @@ export interface ListTxFilters {
   operator?: string;
   take: number;
   skip: number;
-  include_parts?: boolean;
+  includeParts?: boolean;
 }
 
 export interface ListResult<T> {
@@ -18,7 +18,7 @@ export const TX_REPO = Symbol('Tx_Repo');
 export interface TransactionRepository {
   findOneByHash(hash: string, includeParts?: boolean): Promise<TransactionEntity | null>;
   list(filters: ListTxFilters): Promise<ListResult<TransactionEntity>>;
-  countTotal(filters: Omit<ListTxFilters, 'take' | 'skip' | 'include_parts'>): Promise<number>;
+  countTotal(filters: Omit<ListTxFilters, 'take' | 'skip' | 'includeParts'>): Promise<number>;
 
   // Used by the indexer: upsert minimal tx row by hash
   upsertBasic(data: Partial<TransactionEntity> & { transactionHash: string }): Promise<TransactionEntity>;

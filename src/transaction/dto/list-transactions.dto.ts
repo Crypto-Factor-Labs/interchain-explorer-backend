@@ -17,5 +17,5 @@ export class ListTransactionsDto {
   @IsOptional()
   @Transform(({ value }) => value === true || value === 'true' || value === '1')
   @IsBoolean()
-  include_parts: boolean = false;
+  includeParts: boolean = false;
 }

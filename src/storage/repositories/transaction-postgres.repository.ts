@@ -35,7 +35,7 @@ export class TransactionPostgresRepository implements TransactionRepository {
    * @returns A promise resolving to a ListResult containing total count and items.
    */
   async list(filters: ListTxFilters): Promise<ListResult<TransactionEntity>> {
-    const { take, skip, sender, operator, include_parts } = filters;
+    const { take, skip, sender, operator, includeParts } = filters;
 
     // 1) page IDs only (correct pagination)
     const idQb = this.txRepo.createQueryBuilder('t').select('t.id', 'id');
@@ -64,7 +64,7 @@ export class TransactionPostgresRepository implements TransactionRepository {
       .where('t.id = ANY(:ids)', { ids })
       .orderBy('t.id', 'DESC');
 
-    if (include_parts) {
+    if (includeParts) {
       pageQb.leftJoinAndSelect('t.executionParts', 'p')
         .addOrderBy('p.part_index', 'ASC', 'NULLS LAST');
     }

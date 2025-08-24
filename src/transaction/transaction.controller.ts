@@ -31,7 +31,7 @@ export class TransactionController {
     return this.txService.list({
       take: Number(nr),
       skip: Number(skip),
-      include_parts: include,
+      includeParts: include,
       sender,
       operator,
     });
