@@ -81,6 +81,7 @@ export async function indexTransaction(tx: Transaction, manager: EntityManager,)
 
     const partData: Partial<ExecutionPartEntity> = {
       transaction: txEntity,
+      hash: p.dto.hash,
       transactionHash: tx.transactionHash,
       isRevert: p.isRevert,
       partIndex: p.isRevert ? null : p.partIndex, // entity allows null; we never filter by null

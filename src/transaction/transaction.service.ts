@@ -66,7 +66,7 @@ export class TransactionService {
       state: anyT.state ?? null,
       result: anyT.result ?? null,
     };
-    console.log(`includeParts=${includeParts}`, base, anyT.executionParts);
+
     if (!includeParts) return base;
 
     const pick = (o: any, ...ks: string[]) => ks.reduce<any>((v, k) => (v ?? o?.[k]), undefined);

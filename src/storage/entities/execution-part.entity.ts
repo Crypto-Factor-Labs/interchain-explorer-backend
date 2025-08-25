@@ -12,6 +12,9 @@ export class ExecutionPartEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
+  @Column({ name: 'hash', type: 'text' })
+  hash!: string;
+
   @Column({ name: 'transaction_id', type: 'uuid' })
   transactionId!: string;
 
