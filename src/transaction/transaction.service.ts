@@ -59,8 +59,8 @@ export class TransactionService {
       id: anyT.id,
       transactionHash: anyT.transactionHash ?? anyT.transaction_hash,
       includedInMasterBlock: anyT.includedInMasterBlock ?? anyT.included_in_master_block ?? null,
-      masterBlockTransactionIndex:
-        anyT.masterBlockTransactionIndex ?? anyT.master_block_tx_index ?? null,
+      masterBlockHeight: anyT.masterBlock?.height ?? null,  // Add the hydrated masterBlock relation if present
+      masterBlockTransactionIndex: anyT.masterBlockTransactionIndex ?? anyT.master_block_tx_index ?? null,
       sourceSender: anyT.sourceSender ?? anyT.source_sender ?? null,
       sourceChainId: anyT.sourceChainId ?? anyT.source_chain_id ?? null,
       state: anyT.state ?? null,

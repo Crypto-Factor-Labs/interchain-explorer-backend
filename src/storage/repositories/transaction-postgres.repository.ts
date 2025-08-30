@@ -37,32 +37,81 @@ export class TransactionPostgresRepository implements TransactionRepository {
   async list(filters: ListTxFilters): Promise<ListResult<TransactionEntity>> {
     const { take, skip, sender, operator, includeParts } = filters;
 
-    // 1) page IDs only (correct pagination)
-    const idQb = this.txRepo.createQueryBuilder('t').select('t.id', 'id');
+    // ────────────────────────────────────────────────────────────────────────────
+    // Pagination is done in TWO STEPS for correctness & performance.
+    //
+    // STEP 1 — IDs-only pagination (CRITICAL for correctness & performance)
+    //
+    // Why do this first lightweight query first?
+    // • Avoid row fan-out: if we joined 1:N relations (e.g. execution_parts) in the
+    //   same query, a single tx would produce multiple rows and LIMIT/OFFSET would
+    //   slice the *expanded* set. Selecting only parent IDs guarantees we page by
+    //   exactly N transactions.
+    // • Stable ordering: we compute page boundaries using the final ORDER BY
+    //   (mb.height DESC, t.master_block_tx_index DESC, t.id DESC). Step 2 simply
+    //   fetches those IDs and re-applies the same ORDER BY, so the page you show
+    //   matches the page you paginated.
+    // • Faster: this step sorts narrow rows (id + join key) and returns only IDs;
+    //   the heavy/wide rows and relation fetch happen only for that small set.
+    // • No DISTINCT hacks: avoids DISTINCT ON / window functions to de-dupe after joins.
+    //
+    // Note: NULLS LAST pushes non-finalized tx (no master block yet) after finalized ones.
+    // ────────────────────────────────────────────────────────────────────────────
 
-    if (sender) idQb.andWhere('t.source_sender = :sender', { sender });
+    const idQb = this.txRepo.createQueryBuilder('t')
+      .select('t.id', 'id')
+      .leftJoin('master_chain_blocks', 'mb', 'mb.block_hash = t.included_in_master_block');
+
+    if (sender) {
+      idQb.andWhere('t.source_sender = :sender', { sender });
+    }
 
     if (operator) {
       idQb.andWhere(
         `EXISTS (
-           SELECT 1 FROM execution_parts p
-           WHERE p.transaction_id = t.id
-             AND p.operator_address = :op
-         )`,
+         SELECT 1 FROM execution_parts p
+         WHERE p.transaction_id = t.id
+           AND p.operator_address = :op
+       )`,
         { op: operator },
       );
     }
 
-    idQb.orderBy('t.id', 'DESC').offset(skip).limit(take);
+    idQb
+      .orderBy('mb.height', 'DESC', 'NULLS LAST')
+      .addOrderBy('t.master_block_tx_index', 'DESC', 'NULLS LAST')
+      .addOrderBy('t.id', 'DESC') // deterministic tie-breaker
+      .offset(skip)
+      .limit(take);
+
     const rows = await idQb.getRawMany<{ id: string }>();
-    if (rows.length === 0) return { total: await this.countTotal({ sender, operator }), items: [] };
+    if (rows.length === 0) {
+      return { total: await this.countTotal({ sender, operator }), items: [] };
+    }
 
     const ids = rows.map(r => r.id);
 
-    // 2) fetch page
+    // ────────────────────────────────────────────────────────────────────────────
+    // STEP 2 — Fetch the page by IDs (optionally include relations)
+    //
+    // Re-apply the SAME ORDER BY to preserve the order determined in step 1.
+    // It's now safe to join 1:N relations (e.g., Execution Parts) because the page
+    // boundary has already been fixed to those IDs.
+    // ────────────────────────────────────────────────────────────────────────────
     const pageQb = this.txRepo.createQueryBuilder('t')
+      .leftJoinAndMapOne(
+        't.masterBlock',          // hydrate property "masterBlock" on TransactionEntity
+        'MasterChainBlockEntity', // target entity by string
+        'mb',
+        'mb.block_hash = t.included_in_master_block'
+      )
+
+      // Ensure mb columns are selected so the nested object is populated
+      .addSelect(['mb.block_hash', 'mb.height', 'mb.timestamp'])
       .where('t.id = ANY(:ids)', { ids })
-      .orderBy('t.id', 'DESC');
+      .orderBy('mb.height', 'DESC', 'NULLS LAST')
+      .addOrderBy('t.master_block_tx_index', 'DESC', 'NULLS LAST')
+      .addOrderBy('t.id', 'DESC');
 
     if (includeParts) {
       pageQb.leftJoinAndSelect('t.executionParts', 'p')
