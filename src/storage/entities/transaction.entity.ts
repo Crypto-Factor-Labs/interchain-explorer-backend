@@ -3,6 +3,7 @@ import {
   OneToMany, CreateDateColumn, UpdateDateColumn,
   Relation
 } from 'typeorm';
+import type { MasterChainBlockEntity } from './master-chain-block.entity.js';
 import type { ExecutionPartEntity } from './execution-part.entity.js';
 
 @Entity({ name: 'transactions' })
@@ -46,6 +47,9 @@ export class TransactionEntity {
 
   @Column({ name: 'state_validation_result', type: 'smallint', nullable: true })
   stateValidationResult!: number | null; // 0=pending,1=success,2=rollback
+
+  // TEMPORARY, until a relation implemented
+  masterBlock?: MasterChainBlockEntity | null;
 
   @OneToMany(
     'ExecutionPartEntity',

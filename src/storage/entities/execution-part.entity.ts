@@ -4,6 +4,7 @@ import {
   JoinColumn,
   Relation
 } from 'typeorm';
+import type { PartialChainBlockEntity } from './partial-chain-block.entity.js';
 import type { TransactionEntity } from './transaction.entity.js';
 
 @Entity({ name: 'execution_parts' })
@@ -59,6 +60,9 @@ export class ExecutionPartEntity {
   )
   @JoinColumn({ name: 'transaction_id', referencedColumnName: 'id' })
   transaction!: Relation<TransactionEntity>;
+
+  // TEMPORARY, until a relation implemented
+  partialBlock?: PartialChainBlockEntity | null;
 
   @CreateDateColumn({ name: 'created_at' }) createdAt!: Date;
   @UpdateDateColumn({ name: 'updated_at' }) updatedAt!: Date;

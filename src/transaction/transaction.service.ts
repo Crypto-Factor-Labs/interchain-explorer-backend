@@ -59,8 +59,8 @@ export class TransactionService {
       id: anyT.id,
       transactionHash: anyT.transactionHash ?? anyT.transaction_hash,
       includedInMasterBlock: anyT.includedInMasterBlock ?? anyT.included_in_master_block ?? null,
-      masterBlockHeight: anyT.masterBlock?.height ?? null,  // Add the hydrated masterBlock relation if present
-      masterBlockTransactionIndex: anyT.masterBlockTransactionIndex ?? anyT.master_block_tx_index ?? null,
+      masterBlockHeight: anyT.masterBlock?.height ?? null,  // Use the hydrated masterBlock relation if present
+      masterBlockTxIndex: anyT.masterBlockTransactionIndex ?? anyT.master_block_tx_index ?? null,
       sourceSender: anyT.sourceSender ?? anyT.source_sender ?? null,
       sourceChainId: anyT.sourceChainId ?? anyT.source_chain_id ?? null,
       state: anyT.state ?? null,
@@ -69,18 +69,45 @@ export class TransactionService {
 
     if (!includeParts) return base;
 
+    // TEMPORARY: Helper to pick first defined property from object
     const pick = (o: any, ...ks: string[]) => ks.reduce<any>((v, k) => (v ?? o?.[k]), undefined);
 
     const parts = (anyT.executionParts ?? []) as any[];
-    base.executionParts = parts.map(ep => ({
+
+    // Deduplicate parts by hash, preferring reverts over non-reverts, and lower partIndex over higher
+    const byHash = new Map<string, any>();
+    const score = (ep: any) => {
+      const pi = pick(ep, 'partIndex', 'part_index');
+      const revFlag = pick(ep, 'isRevert', 'is_revert');
+      const isRevert = (pi == null) || revFlag === true || revFlag === 1;
+      // Lower score wins: revert (0) beats non-revert (1); tie-break by partIndex
+      return [isRevert ? 0 : 1, pi ?? Number.POSITIVE_INFINITY] as [number, number];
+    };
+    for (const ep of parts) {
+      const k = ep.hash as string;
+      if (!k) continue;
+      const cur = byHash.get(k);
+      if (!cur) byHash.set(k, ep);
+      else {
+        const [sa, ia] = score(ep);
+        const [sb, ib] = score(cur);
+        if (sa < sb || (sa === sb && ia < ib)) byHash.set(k, ep);
+      }
+    }
+    const finalParts = Array.from(byHash.values());
+
+    base.executionParts = finalParts.map(ep => ({
+      id: ep.id ?? null,
       hash: ep.hash ?? null,
       transactionHash: pick(ep, 'transactionHash', 'transaction_hash'),
       partIndex: pick(ep, 'partIndex', 'part_index'),
       isRevert: pick(ep, 'isRevert', 'is_revert') === true,
       chainId: pick(ep, 'chainId', 'chain_id') ?? null,
+      includedInPartialBlock: pick(ep, 'includedInPartialBlock', 'included_in_partial_block') ?? null,
+      partialBlockHeight: ep.partialBlock?.height ?? null,  // Use the hydrated partialBlock relation if present
+      partialBlockPartIndex: pick(ep, 'partialBlockPartIndex', 'partial_block_part_index') ?? null,
       operatorAddress: pick(ep, 'operatorAddress', 'operator_address') ?? null,
       senderAddress: pick(ep, 'senderAddress', 'sender_address') ?? null,
-      includedInPartialBlock: pick(ep, 'includedInPartialBlock', 'included_in_partial_block') ?? null,
     }));
 
     return base;

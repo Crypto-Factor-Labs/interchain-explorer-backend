@@ -19,10 +19,16 @@ export class TransactionPostgresRepository implements TransactionRepository {
    */
   async findOneByHash(hash: string, includeParts = true): Promise<TransactionEntity | null> {
     const qb = this.txRepo.createQueryBuilder('t')
-      .where('t.transaction_hash = :hash', { hash });
+      .where('t.transaction_hash = :hash', { hash })
+      .leftJoinAndMapOne('t.masterBlock', 'MasterChainBlockEntity', 'mb',
+        'mb.block_hash = t.included_in_master_block')
+      .addSelect(['mb.block_hash', 'mb.height']);  // Add the height of the MasterBlock
 
     if (includeParts) {
       qb.leftJoinAndSelect('t.executionParts', 'p')
+        .leftJoinAndMapOne('p.partialBlock', 'PartialChainBlockEntity', 'pb',
+          'pb.block_hash = p.included_in_partial_block')
+        .addSelect(['pb.block_hash', 'pb.height'])  // Add the height of the MasterBlock
         .orderBy('p.part_index', 'ASC', 'NULLS LAST');
     }
     return qb.getOne();
@@ -107,14 +113,23 @@ export class TransactionPostgresRepository implements TransactionRepository {
       )
 
       // Ensure mb columns are selected so the nested object is populated
-      .addSelect(['mb.block_hash', 'mb.height', 'mb.timestamp'])
+      .addSelect(['mb.block_hash', 'mb.height'])
       .where('t.id = ANY(:ids)', { ids })
       .orderBy('mb.height', 'DESC', 'NULLS LAST')
       .addOrderBy('t.master_block_tx_index', 'DESC', 'NULLS LAST')
       .addOrderBy('t.id', 'DESC');
 
     if (includeParts) {
-      pageQb.leftJoinAndSelect('t.executionParts', 'p')
+      pageQb
+        .leftJoinAndSelect('t.executionParts', 'p')
+        .addSelect(['p.id']) // handy for mapper/debug
+        .leftJoinAndMapOne(
+          'p.partialBlock',  // hydrate each EP with its PartialBlock
+          'PartialChainBlockEntity',
+          'pb',
+          'pb.block_hash = p.included_in_partial_block',
+        )
+        .addSelect(['mb.block_hash', 'pb.height'])
         .addOrderBy('p.part_index', 'ASC', 'NULLS LAST');
     }
 
