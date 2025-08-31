@@ -12,7 +12,7 @@ export class StatisticsController {
   @Get()
   async getStatistics() {
     try {
-      console.log('>>> getStatistics');
+      //console.log('>>> getStatistics');
       return await this.statisticsService.getStatistics();
     } catch (error) {
       console.error('Error retrieving statistics', error);

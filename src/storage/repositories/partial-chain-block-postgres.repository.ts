@@ -31,4 +31,15 @@ export class PartialChainBlockPostgresRepository implements PartialChainBlockRep
     return this.repository.findOne({ where: { block_hash } });
   }
 
+  async getUnconfirmed(take: number): Promise<PartialChainBlockEntity[]> {
+    return this.repository.find({
+      where: { confirmed: false },
+      order: { height: 'ASC' },
+      take,
+    });
+  }
+
+  async patchByHash(block_hash: string, patch: Partial<PartialChainBlockEntity>): Promise<void> {
+    await this.repository.update({ block_hash }, patch);
+  }
 }
