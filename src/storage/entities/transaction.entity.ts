@@ -28,9 +28,8 @@ export class TransactionEntity {
   @Column({ name: 'state_validator', type: 'text', nullable: true })
   stateValidator!: string | null;
 
-  // Overall transaction state (from payload `state`)
   @Column({ name: 'state', type: 'smallint' })
-  state!: number; // 0=pending,1=success,2=failed/rollback (per spec)
+  state!: number;
 
   @Column({ name: 'included_in_master_block', type: 'text' })
   includedInMasterBlock!: string;

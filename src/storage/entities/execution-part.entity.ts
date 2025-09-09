@@ -43,15 +43,27 @@ export class ExecutionPartEntity {
   @Column({ name: 'partial_block_part_index', type: 'integer', nullable: true })
   partialBlockPartIndex!: number | null;
 
-  // Events for linking later
-  @Column({ name: 'target_exec_tx_hash', type: 'text', nullable: true })
-  targetExecutionTxHash!: string | null;
+  // Links to ChainEvents
+  @Column({ name: 'target_sched_event_hash', type: 'text', nullable: true })
+  targetSchedulingEventHash!: string | null;
+
+  @Column({ name: 'target_publish_event_hash', type: 'text', nullable: true })
+  targetPublishEventHash!: string | null;
+
+  @Column({ name: 'target_exec_event_hash', type: 'text', nullable: true })
+  targetExecutionEventHash!: string | null;
 
   @Column({ name: 'target_exec_result', type: 'smallint', nullable: true })
   targetExecutionResult!: number | null; // 0=pending,1=success,2=failed
 
-  @Column({ name: 'target_sched_tx_hash', type: 'text', nullable: true })
-  targetSchedulingTxHash!: string | null;
+  @Column({ name: 'mempool_commit_event_hash', type: 'text', nullable: true })
+  mempoolCommitEventHash!: string | null;
+
+  @Column({ name: 'mempool_epoch_consensus_proof', type: 'text', nullable: true })
+  mempoolEpochConsensusProof!: string | null;
+
+  @Column({ name: 'mempool_epoch_evm_proof', type: 'text', nullable: true })
+  mempoolEpochEVMProof!: string | null;
 
   @ManyToOne(
     'TransactionEntity',

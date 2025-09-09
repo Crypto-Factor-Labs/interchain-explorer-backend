@@ -22,13 +22,17 @@ import { EXEC_PART_REPO } from './repositories/execution-part.repository.js';
 import { ExecutionPartPostgresRepository } from './repositories/execution-part-postgres.repository.js';
 import { ExecutionPartEntity } from './entities/execution-part.entity.js';
 
+import { CHAIN_EVENT_REPO } from './repositories/chain-event.repository.js';
+import { ChainEventPostgresRepository } from './repositories/chain-event-postgres.repository.js';
+import { ChainEventEntity } from './entities/chain-event.entity.js';
+
 import { CfrPriceHistoryRepository } from './repositories/cfr-price-history.repository.js';
 import { CfrPriceHistoryEntity } from './entities/cfr-price-history.entity.js';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([IndexerLockEntity, MasterChainBlockEntity, PartialChainBlockEntity,
-      TransactionEntity, ExecutionPartEntity, CfrPriceHistoryEntity]),
+      TransactionEntity, ExecutionPartEntity, ChainEventEntity, CfrPriceHistoryEntity]),
     TypeOrmModule.forRootAsync({
       useFactory: async (configService: ConfigService) => {
         return {
@@ -51,6 +55,7 @@ import { CfrPriceHistoryEntity } from './entities/cfr-price-history.entity.js';
     { provide: PC_BLOCK_REPO, useClass: PartialChainBlockPostgresRepository },
     { provide: TX_REPO, useClass: TransactionPostgresRepository },
     { provide: EXEC_PART_REPO, useClass: ExecutionPartPostgresRepository },
+    { provide: CHAIN_EVENT_REPO, useClass: ChainEventPostgresRepository },
     CfrPriceHistoryRepository,
   ],
   exports: [IndexerLockRepository, MC_BLOCK_REPO, PC_BLOCK_REPO,

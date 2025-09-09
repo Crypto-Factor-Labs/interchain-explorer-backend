@@ -250,85 +250,6 @@ export class CreateInterchainSchema_1710765072069 implements MigrationInterface 
       })
     );
 
-    // Create partial_block_execution_parts table
-    await queryRunner.createTable(
-      new Table({
-        name: "partial_block_execution_parts",
-        columns: [
-          {
-            name: "id",
-            type: "uuid",
-            isPrimary: true,
-            default: "gen_random_uuid()"
-          },
-          {
-            name: "partial_block_hash",
-            type: "text",
-            isNullable: true
-          },
-          {
-            name: "type",
-            type: "execution_part_type",
-            isNullable: false
-          },
-          {
-            name: "operator_address",
-            type: "text",
-            isNullable: false
-          },
-          {
-            name: "execution_hex_encoded",
-            type: "text",
-            isNullable: false
-          },
-          {
-            name: "executed",
-            type: "boolean",
-            isNullable: false,
-            default: "false"
-          },
-          {
-            name: "successful",
-            type: "boolean",
-            isNullable: true
-          },
-          {
-            name: "indexed_at",
-            type: "timestamp",
-            default: "NOW()"
-          }
-        ]
-      }),
-      true
-    );
-
-    // Add foreign key for partial_block_execution_parts referencing partial_chain_blocks
-    await queryRunner.createForeignKey(
-      "partial_block_execution_parts",
-      new TableForeignKey({
-        columnNames: ["partial_block_hash"],
-        referencedTableName: "partial_chain_blocks",
-        referencedColumnNames: ["block_hash"],
-        onDelete: "CASCADE"
-      })
-    );
-
-    // Create indexes for partial_block_execution_parts
-    await queryRunner.createIndex(
-      "partial_block_execution_parts",
-      new TableIndex({
-        name: "idx_partial_block_execution_parts_type",
-        columnNames: ["type"]
-      })
-    );
-    await queryRunner.createIndex(
-      "partial_block_execution_parts",
-      new TableIndex({
-        name: "idx_partial_block_execution_parts_executed",
-        columnNames: ["executed"]
-      })
-    );
-
     // Create indexer_lock table
     await queryRunner.createTable(
       new Table({
@@ -366,18 +287,6 @@ export class CreateInterchainSchema_1710765072069 implements MigrationInterface 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Drop indexer_lock table
     await queryRunner.dropTable("indexer_lock");
-
-    // Drop foreign key and indexes for partial_block_execution_parts, then drop the table
-    const tableExecParts = await queryRunner.getTable("partial_block_execution_parts");
-    if (tableExecParts) {
-      const fkExecParts = tableExecParts.foreignKeys.find(fk => fk.columnNames.indexOf("partial_block_hash") !== -1);
-      if (fkExecParts) {
-        await queryRunner.dropForeignKey("partial_block_execution_parts", fkExecParts);
-      }
-      await queryRunner.dropIndex("partial_block_execution_parts", "idx_partial_block_execution_parts_type");
-      await queryRunner.dropIndex("partial_block_execution_parts", "idx_partial_block_execution_parts_executed");
-      await queryRunner.dropTable("partial_block_execution_parts");
-    }
 
     // Drop foreign key and index for partial_chain_blocks, then drop the table
     const tablePartialChainBlocks = await queryRunner.getTable("partial_chain_blocks");
