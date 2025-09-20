@@ -70,6 +70,7 @@ export class TransactionService {
       sourceChainId: anyT.sourceChainId ?? anyT.source_chain_id ?? null,
       state: anyT.state ?? null,
       result: anyT.result ?? null,
+      stateValidationResult: anyT.stateValidationResult ?? anyT.state_validation_result ?? null,
     };
 
     if (!includeParts) return base;
@@ -98,12 +99,12 @@ export class TransactionService {
     }
     const finalParts = Array.from(byHash.values());
 
-    // Optional: compute 4-step events per EP when ceMap is provided
+    // Compute 4-step events per EP when ceMap is provided
     let eventsById: Map<string, ChainEvents> | undefined;
     if (ceMap) {
       eventsById = new Map<string, ChainEvents>();
       for (const ep of finalParts) {
-        const events = buildChainEventsForEP(ep, ceMap) as ChainEvents;
+        const events = buildChainEventsForEP(ep, ceMap, base.state ?? (anyT.state as any)) as ChainEvents;
         if (ep.id) eventsById.set(ep.id, events);
       }
     }

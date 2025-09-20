@@ -1,4 +1,3 @@
-// src/indexer/index-master-block.ts
 import BN from 'bn.js';
 import type { DataSource } from 'typeorm';
 import type { MasterBlock } from '../reader-node/types/masterblock.types.js';
@@ -32,6 +31,7 @@ export async function indexMasterBlock(
       mb.timestamp = new Date(toMs(block.timestamp) ?? block.timestamp);
       mb.merkle_root = block.partialBlockRoot;
       mb.block_mint_transaction = block.transactions?.[0]?.transactionHash ?? '';
+      mb.tx_count = block.transactions?.length ?? 0;
       mb.indexed_at = new Date();
       await manager.save(mb);
 
@@ -47,17 +47,16 @@ export async function indexMasterBlock(
           const isFull = (txLite as Tx).executionParts && Array.isArray((txLite as Tx).executionParts);
           const txFull: Tx = isFull ? (txLite as Tx) : await rnService.fetchTransaction(txLite.transactionHash);
 
-          const included = txFull.includedInMasterBlock ?? block.blockHash;
+          const includedIn = txFull.includedInMasterBlock || block.blockHash;
           if (txFull.includedInMasterBlock && txFull.includedInMasterBlock !== block.blockHash) {
             logger?.warn?.(
               `Tx ${txFull.transactionHash} includedInMasterBlock=${txFull.includedInMasterBlock} != current ${block.blockHash}`,
             );
           }
-
           await indexTransaction(
             {
               ...txFull,
-              includedInMasterBlock: included,
+              includedInMasterBlock: includedIn,
               masterBlockTransactionIndex: txFull.masterBlockTransactionIndex ?? i,
             },
             manager,

@@ -12,17 +12,6 @@ export class ChainEventPostgresRepository implements ChainEventRepository {
 
   async upsert(input: UpsertChainEventInput): Promise<ChainEventEntity> {
     const entity = this.repo.create({
-      blockHash: input.blockHash,
-      blockHeight: input.blockHeight,
-      blockTimestamp: input.blockTimestamp,
-      blockSubchain: input.blockSubchain ?? null,
-
-      transactionHash: input.transactionHash ?? null,
-      transactionReceiver: input.transactionReceiver ?? null,
-      transactionSender: input.transactionSender ?? null,
-      transactionSubchain: input.transactionSubchain ?? null,
-      transactionData: input.transactionData ?? null,
-
       eventHash: input.eventHash ?? null,
       eventTimestamp: input.eventTimestamp ?? null,
       eventBlock: input.eventBlock ?? null,
@@ -31,6 +20,17 @@ export class ChainEventPostgresRepository implements ChainEventRepository {
       eventSender: input.eventSender ?? null,
       eventSubchain: input.eventSubchain ?? null,
       eventData: input.eventData ?? null,
+
+      transactionHash: input.transactionHash ?? null,
+      transactionReceiver: input.transactionReceiver ?? null,
+      transactionSender: input.transactionSender ?? null,
+      transactionSubchain: input.transactionSubchain ?? null,
+      transactionData: input.transactionData ?? null,
+
+      blockHash: input.blockHash,
+      blockHeight: input.blockHeight,
+      blockTimestamp: input.blockTimestamp,
+      blockSubchain: input.blockSubchain ?? null,
 
       type: input.type ?? null,
       encodableType: input.encodableType ?? null,

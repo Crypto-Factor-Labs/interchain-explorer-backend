@@ -4,13 +4,12 @@ type BNLike = BN | { toString(radix?: number): string };
 
 // At ingest means: do those conversions before we save or pass the data deeper into the system.
 
-/**
- * Normalize timestamps to milliseconds.
- * Accepts seconds (10-digit) or ms (13-digit). Returns ms.
- */
+/** Normalize timestamps to ms (seconds or ms in, ms out). */
 export const toMs = (v?: number | null): number | undefined => {
   if (v == null) return undefined;
-  return v < 1e12 ? v * 1000 : v;
+  const n = Number(v);
+  if (!Number.isFinite(n) || n <= 0) return undefined; // hide 0/neg/NaN
+  return n < 1e12 ? n * 1000 : n;
 };
 
 /**

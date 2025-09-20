@@ -87,6 +87,7 @@ export class MasterChainService {
       timestamp: mb.timestamp,
       merkle_root: mb.merkle_root,
       block_mint_transaction: mb.block_mint_transaction,
+      tx_count: mb.tx_count,
       indexed_at: mb.indexed_at,
     };
   }

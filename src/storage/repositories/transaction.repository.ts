@@ -22,4 +22,7 @@ export interface TransactionRepository {
 
   // Used by the indexer: upsert minimal tx row by hash
   upsertBasic(data: Partial<TransactionEntity> & { transactionHash: string }): Promise<TransactionEntity>;
+
+  getPending(take: number): Promise<TransactionEntity[]>;
+  patchByHash(hash: string, patch: Partial<TransactionEntity>): Promise<void>;
 }

@@ -176,4 +176,17 @@ export class TransactionPostgresRepository implements TransactionRepository {
     Object.assign(tx, data);
     return this.txRepo.save(tx);
   }
+
+  async getPending(take: number): Promise<TransactionEntity[]> {
+    return this.txRepo.createQueryBuilder('tx')
+      .where('tx.state < :s', { s: 4 })  // state <= EXECUTING
+      .orderBy('tx.id', 'ASC')
+      .limit(take)
+      .getMany();
+  }
+
+  async patchByHash(hash: string, patch: Partial<TransactionEntity>): Promise<void> {
+    await this.txRepo.update({ transactionHash: hash }, patch);
+  }
+
 }

@@ -10,19 +10,6 @@ export type ExecResult = TriState;
 export type ValidationResult = TriState;
 
 export interface ChainEvent {
-  // Block-level
-  blockHash: string;
-  blockHeight: string;        // decimal string
-  blockTimestamp: number;     // ms
-  blockSubchain?: string;
-
-  // Transaction-level (optional)
-  transactionHash?: string;
-  transactionReceiver?: string;
-  transactionSender?: string;
-  transactionSubchain?: string;
-  transactionData?: string;
-
   // Event-level
   eventHash?: string;
   eventTimestamp?: number;    // ms
@@ -32,6 +19,19 @@ export interface ChainEvent {
   eventSender?: string;
   eventSubchain?: string;
   eventData?: string;
+
+  // Transaction-level (optional)
+  transactionHash?: string;
+  transactionReceiver?: string;
+  transactionSender?: string;
+  transactionSubchain?: string;
+  transactionData?: string;
+
+  // Block-level
+  blockHash: string;
+  blockHeight: string;        // decimal string
+  blockTimestamp: number;     // ms
+  blockSubchain?: string;
 
   // Optional metadata
   type?: number;

@@ -27,6 +27,9 @@ export class MasterChainBlockEntity {
   @Column('text')
   block_mint_transaction!: string;
 
+  @Column({ name: 'tx_count', type: 'integer', default: 0 })
+  tx_count!: number;
+
   @Column('timestamptz')
   indexed_at!: Date;
 

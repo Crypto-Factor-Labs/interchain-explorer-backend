@@ -7,10 +7,10 @@ export function collectEventHashesFromEPs(eps: ExecutionPartEntity[]): string[] 
   const set = new Set<string>();
 
   for (const ep of eps) {
-    if (ep.targetSchedulingEventHash) set.add(ep.targetSchedulingEventHash);
     if (ep.targetPublishEventHash) set.add(ep.targetPublishEventHash);
-    if (ep.targetExecutionEventHash) set.add(ep.targetExecutionEventHash);
     if (ep.mempoolCommitEventHash) set.add(ep.mempoolCommitEventHash);
+    if (ep.targetSchedulingEventHash) set.add(ep.targetSchedulingEventHash);
+    if (ep.targetExecutionEventHash) set.add(ep.targetExecutionEventHash);
   }
 
   return [...set];
@@ -27,8 +27,8 @@ export async function loadChainEventsMap(
   const rows = await repo.find({ where: { eventHash: In(hashes) } });
   const map = new Map<string, ChainEventEntity>();
 
-  for (const r of rows)
-    if (r.eventHash) map.set(r.eventHash, r);
+  for (const row of rows)
+    if (row.eventHash) map.set(row.eventHash, row);
 
   return map;
 }

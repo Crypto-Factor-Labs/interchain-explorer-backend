@@ -9,8 +9,7 @@ export type ChainEventStatus =
 export interface ChainEventDto {
   name: string;
   status: ChainEventStatus;
-  startedAt?: string;   // ISO
-  finishedAt?: string;  // ISO
+  timestamp?: string;   // ISO
 }
 
 export type ChainEvents = [ChainEventDto, ChainEventDto, ChainEventDto, ChainEventDto];

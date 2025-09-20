@@ -31,7 +31,7 @@ export class TransactionEntity {
   @Column({ name: 'state', type: 'smallint' })
   state!: number;
 
-  @Column({ name: 'included_in_master_block', type: 'text' })
+  @Column({ name: 'included_in_master_block', type: 'text', nullable: true })
   includedInMasterBlock!: string;
 
   @Column({ name: 'master_block_tx_index', type: 'integer' })
@@ -46,6 +46,9 @@ export class TransactionEntity {
 
   @Column({ name: 'state_validation_result', type: 'smallint', nullable: true })
   stateValidationResult!: number | null; // 0=pending,1=success,2=rollback
+
+  @Column({ name: 'result', type: 'smallint', nullable: true })
+  result!: number | null; // 0=pending, 1=success, 2=failed (from RN top-level)
 
   // TEMPORARY, until a relation implemented
   masterBlock?: MasterChainBlockEntity | null;

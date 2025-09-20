@@ -39,6 +39,12 @@ export class CreateInterchainSchema_1710765072069 implements MigrationInterface 
             isNullable: false
           },
           {
+            name: 'tx_count',
+            type: 'integer',
+            isNullable: false,
+            default: 0,
+          },
+          {
             name: "indexed_at",
             type: "timestamp",
             isNullable: false,
