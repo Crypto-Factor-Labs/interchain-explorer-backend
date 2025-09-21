@@ -1,4 +1,4 @@
-FROM node:21-alpine As build
+FROM node:24-alpine As build
 
 WORKDIR /usr/src/app
 
@@ -12,7 +12,7 @@ RUN npm run build
 
 RUN npm ci --only=production && npm cache clean --force
 
-FROM node:21-alpine As production
+FROM node:24-alpine As production
 
 COPY --chown=node:node --from=build /usr/src/app/dist ./dist
 COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
