@@ -2,9 +2,7 @@
   "compilerOptions": {
     "baseUrl": "./",
     "outDir": "./dist",
-
     "incremental": true,
-
     // Type checking
     "strict": true,
     "useDefineForClassFields": true, // Not enabled by default in `strict` mode unless we bump `target` to ES2022.
@@ -17,11 +15,9 @@
     // TODO: The following options are also not enabled by default in `strict` mode and would be nice to have but would require some adjustments to the codebase.
     // "exactOptionalPropertyTypes": true,
     // "noUncheckedIndexedAccess": true,
-
     // JavaScript support
     "allowJs": false,
     "checkJs": false,
-
     // Interop constraints
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -29,16 +25,16 @@
     "verbatimModuleSyntax": false,
     "importHelpers": true, // This is only used for build validation. Since we do not have `tslib` installed, this will fail if we accidentally make use of anything that'd require injection of helpers.
     "emitDecoratorMetadata": true,
-
     // Language and environment
-    "moduleResolution": "Node",
+    "moduleResolution": "node",
     "module": "ESNext",
-    "target": "esnext", // Setting this to `ES2021` enables native support for `Node v16+`: https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping.
+    "target": "ESNext", // Setting this to `ES2021` enables native support for `Node v16+`: https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping.
+    // PvG: "module": "CommonJS",
+    // PvG: "target": "ES2020",
     "lib": [
       "ES2022", // By using ES2022 we get access to the `.cause` property on `Error` instances.
       "DOM" // We are adding `DOM` here to get the `fetch`, etc. types. This should be removed once these types are available via DefinitelyTyped.
     ],
-
     // Skip type checking for node modules
     "skipLibCheck": true,
     "declaration": true,
@@ -46,6 +42,16 @@
     "noPropertyAccessFromIndexSignature": true,
     "downlevelIteration": true,
     "experimentalDecorators": true,
-    "preserveSymlinks": true
-  }
+    "preserveSymlinks": true,
+    "typeRoots": [
+      "node_modules/@types",
+      "src/types"
+    ],
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }
