@@ -4,7 +4,7 @@ import { randomUUID } from 'crypto';
 import { PartisiaBlockchainService } from '@unleashed-business/ts-web3-commons/dist/pbc/pbc.service.js';
 import { ChainDefinition, PBCChain, PBCChainsIndex } from '@unleashed-business/ts-web3-commons/dist/pbc/pbc.chains.js';
 import { HashTypeSpec, U32TypeSpec } from '@unleashed-business/ts-web3-commons/dist/pbc/spec/commons.tspec.js';
-import { BN, StructTypeSpec } from "@partisiablockchain/abi-client";
+import { BN } from "@partisiablockchain/abi-client";
 import { PartisiaUtils } from "./partisia.utils.js";
 import { Web3 } from "web3";
 import { bn_wrap } from "@unleashed-business/ts-web3-commons";
@@ -163,7 +163,7 @@ export class PartisiaService {
       async (state, trees, namedTypes) => {
         let forkNr = state!['active_fork'].asNumber();
         const forkInfo = trees[this.treeId](
-          true, U32TypeSpec, namedTypes["MasterChainFork"] as StructTypeSpec,
+          true, U32TypeSpec, namedTypes["MasterChainFork"],
           valueRaw => PartisiaUtils.toU32AvlKey(valueRaw.asNumber()),
           valueRaw => valueRaw.structValue());
 
@@ -192,7 +192,7 @@ export class PartisiaService {
       async (_state, trees, namedTypes) => {
         // Extract the blockchain address from the response
         const forkInfo = trees[this.treeId](
-          true, U32TypeSpec, namedTypes["MasterChainFork"] as StructTypeSpec,
+          true, U32TypeSpec, namedTypes["MasterChainFork"],
           valueRaw => PartisiaUtils.toU32AvlKey(valueRaw.asNumber()),
           valueRaw => valueRaw.structValue());
         const fork = await forkInfo.get(PartisiaUtils.toU32AvlKey(forkNr));
@@ -231,7 +231,7 @@ export class PartisiaService {
 
         // Extract the block tree and find the last block by tip hash
         const blockTree = trees[this.treeId](
-          true, HashTypeSpec, namedTypes["PbcMasterChainBlock"] as StructTypeSpec,
+          true, HashTypeSpec, namedTypes["PbcMasterChainBlock"],
           valueRaw => PartisiaUtils.toHashAvlKey(valueRaw.hashValue().value.toString("hex")),
           valueRaw => valueRaw.structValue()
         );
@@ -274,7 +274,7 @@ export class PartisiaService {
       blockchainAddress,
       async (_state, trees, namedTypes) => {  // trees --> property 'blocks' in PBC Explorer
         const blockTree = trees[this.treeId](
-          true, HashTypeSpec, namedTypes["PbcMasterChainBlock"] as StructTypeSpec,
+          true, HashTypeSpec, namedTypes["PbcMasterChainBlock"],
           valueRaw => PartisiaUtils.toHashAvlKey(valueRaw.hashValue().value.toString("hex")),
           valueRaw => valueRaw.structValue()
         );
@@ -422,7 +422,7 @@ export class PartisiaService {
       blockchainAddress,
       async (_state, trees, namedTypes) => {  // trees --> property 'partial_chain_blocks' in PBC Explorer
         const blockTree = trees[1](
-          true, HashTypeSpec, namedTypes["PbcPartialChainBlock"] as StructTypeSpec,
+          true, HashTypeSpec, namedTypes["PbcPartialChainBlock"],
           valueRaw => PartisiaUtils.toHashAvlKey(valueRaw.hashValue().value.toString("hex")),
           valueRaw => valueRaw.structValue()
         );
