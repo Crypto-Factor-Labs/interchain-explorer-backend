@@ -4,13 +4,13 @@ WORKDIR /usr/src/app
 
 COPY --chown=node:node package*.json ./
 
-RUN npm ci --force
+RUN npm ci
 
 COPY --chown=node:node . .
 
 RUN npm run build
 
-RUN npm ci --only=production --force && npm cache clean --force
+RUN npm ci --only=production && npm cache clean --force
 
 FROM node:21-alpine As production
 
