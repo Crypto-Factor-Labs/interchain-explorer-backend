@@ -32,6 +32,7 @@ export class TransactionService {
       take: qp.take,
       skip: qp.skip,
       includeParts: qp.includeParts,
+      masterBlockHash: qp.masterBlockHash,
       sender: qp.sender,
       operator: qp.operator,
     });
@@ -50,8 +51,12 @@ export class TransactionService {
     };
   }
 
-  async countTotal(params: { sender?: string; operator?: string } = {}): Promise<number> {
-    return this.repo.countTotal({ sender: params.sender, operator: params.operator });
+  async countTotal(params: { masterBlockHash?: string, sender?: string; operator?: string } = {}): Promise<number> {
+    return this.repo.countSelectedTotal({
+      masterBlockHash: params.masterBlockHash,
+      sender: params.sender,
+      operator: params.operator
+    });
   }
 
   /**

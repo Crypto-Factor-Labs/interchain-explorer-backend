@@ -37,6 +37,14 @@ export class CreateTransactionsAndExecutionParts1710765072071 implements Migrati
       }),
     );
 
+    await queryRunner.createIndex(
+      'transactions',
+      new TableIndex({
+        name: 'ix_transactions_included_in_master_block',
+        columnNames: ['included_in_master_block'],
+      }),
+    );
+
     // execution_parts
     await queryRunner.createTable(
       new Table({
@@ -114,6 +122,7 @@ export class CreateTransactionsAndExecutionParts1710765072071 implements Migrati
 
     await queryRunner.dropTable('execution_parts');
 
+    await queryRunner.dropIndex('transactions', 'ix_transactions_included_in_master_block');
     await queryRunner.dropIndex('transactions', 'ux_transactions_tx_hash');
     await queryRunner.dropTable('transactions');
   }

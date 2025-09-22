@@ -19,6 +19,9 @@ export class ListTransactionsDto {
   includeEvents: boolean = false;
 
   @IsOptional() @IsString()
+  masterBlockHash?: string;
+
+  @IsOptional() @IsString()
   sender?: string;
 
   @IsOptional() @IsString()
