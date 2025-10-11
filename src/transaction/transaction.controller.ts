@@ -7,10 +7,11 @@ export class TransactionController {
   constructor(private readonly txService: TransactionService) { }
 
   // GET /api/masterchain/transaction/:hash
+  @Get('transaction/:hash')
   async getOne(@Param('hash', new HashParamPipe()) hash: string) {
     const tx = await this.txService.findOneByHash(hash);
     if (!tx) throw new NotFoundException('Transaction not found');
-    return tx;
+    return tx; // full Transaction incl. parts & events
   }
 
   // GET /api/masterchain/transactions?nr=10&skip=0&includeParts=true&includeEvents=true&sender=...&operator=...
