@@ -41,7 +41,7 @@ export class TransactionPostgresRepository implements TransactionRepository {
    * @returns A promise resolving to a ListResult containing total count and items.
    */
   async list(filters: ListTxFilters): Promise<ListResult<TransactionEntity>> {
-    const { take, skip, sender, operator, includeParts } = filters;
+    const { take, skip, masterBlockHash, sender, operator, includeParts } = filters;
 
     // ────────────────────────────────────────────────────────────────────────────
     // Pagination is done in TWO STEPS for correctness & performance.
@@ -64,20 +64,24 @@ export class TransactionPostgresRepository implements TransactionRepository {
     // Note: NULLS LAST pushes non-finalized tx (no master block yet) after finalized ones.
     // ────────────────────────────────────────────────────────────────────────────
 
-    const idQb = this.txRepo.createQueryBuilder('t')
-      .select('t.id', 'id')
-      .leftJoin('master_chain_blocks', 'mb', 'mb.block_hash = t.included_in_master_block');
+    const idQb = this.txRepo.createQueryBuilder('tx')
+      .select('tx.id', 'id')
+      .leftJoin('master_chain_blocks', 'mb', 'mb.block_hash = tx.included_in_master_block');
+
+    if (masterBlockHash) {
+      idQb.andWhere('tx.included_in_master_block = :mbh', { mbh: masterBlockHash });
+    }
 
     if (sender) {
-      idQb.andWhere('t.source_sender = :sender', { sender });
+      idQb.andWhere('tx.source_sender = :sender', { sender });
     }
 
     if (operator) {
       idQb.andWhere(
         `EXISTS (
-         SELECT 1 FROM execution_parts p
-         WHERE p.transaction_id = t.id
-           AND p.operator_address = :op
+         SELECT 1 FROM execution_parts ep
+         WHERE ep.transaction_id = tx.id
+           AND ep.operator_address = :op
        )`,
         { op: operator },
       );
@@ -85,14 +89,14 @@ export class TransactionPostgresRepository implements TransactionRepository {
 
     idQb
       .orderBy('mb.height', 'DESC', 'NULLS LAST')
-      .addOrderBy('t.master_block_tx_index', 'DESC', 'NULLS LAST')
-      .addOrderBy('t.id', 'DESC') // deterministic tie-breaker
+      .addOrderBy('tx.master_block_tx_index', 'DESC', 'NULLS LAST')
+      .addOrderBy('tx.id', 'DESC') // deterministic tie-breaker
       .offset(skip)
       .limit(take);
 
     const rows = await idQb.getRawMany<{ id: string }>();
     if (rows.length === 0) {
-      return { total: await this.countTotal({ sender, operator }), items: [] };
+      return { total: await this.countSelectedTotal({ masterBlockHash, sender, operator }), items: [] };
     }
 
     const ids = rows.map(r => r.id);
@@ -104,55 +108,67 @@ export class TransactionPostgresRepository implements TransactionRepository {
     // It's now safe to join 1:N relations (e.g., Execution Parts) because the page
     // boundary has already been fixed to those IDs.
     // ────────────────────────────────────────────────────────────────────────────
-    const pageQb = this.txRepo.createQueryBuilder('t')
+    const pageQb = this.txRepo.createQueryBuilder('tx')
       .leftJoinAndMapOne(
-        't.masterBlock',          // hydrate property "masterBlock" on TransactionEntity
+        'tx.masterBlock',         // hydrate property "masterBlock" on TransactionEntity
         'MasterChainBlockEntity', // target entity by string
         'mb',
-        'mb.block_hash = t.included_in_master_block'
+        'mb.block_hash = tx.included_in_master_block'
       )
 
       // Ensure mb columns are selected so the nested object is populated
       .addSelect(['mb.block_hash', 'mb.height'])
-      .where('t.id = ANY(:ids)', { ids })
+      .where('tx.id = ANY(:ids)', { ids })
       .orderBy('mb.height', 'DESC', 'NULLS LAST')
-      .addOrderBy('t.master_block_tx_index', 'DESC', 'NULLS LAST')
-      .addOrderBy('t.id', 'DESC');
+      .addOrderBy('tx.master_block_tx_index', 'DESC', 'NULLS LAST')
+      .addOrderBy('tx.id', 'DESC');
 
     if (includeParts) {
       pageQb
-        .leftJoinAndSelect('t.executionParts', 'p')
-        .addSelect(['p.id']) // handy for mapper/debug
+        .leftJoinAndSelect('tx.executionParts', 'ep')
+        .addSelect(['ep.id']) // handy for mapper/debug
         .leftJoinAndMapOne(
-          'p.partialBlock',  // hydrate each EP with its PartialBlock
+          'ep.partialBlock',  // hydrate each EP with its PartialBlock
           'PartialChainBlockEntity',
           'pb',
-          'pb.block_hash = p.included_in_partial_block',
+          'pb.block_hash = ep.included_in_partial_block',
         )
         .addSelect(['mb.block_hash', 'pb.height'])
-        .addOrderBy('p.part_index', 'ASC', 'NULLS LAST');
+        .addOrderBy('ep.part_index', 'ASC', 'NULLS LAST');
     }
 
     const items = await pageQb.getMany();
-    const total = await this.countTotal({ sender, operator });
+    const total = await this.countSelectedTotal({ masterBlockHash, sender, operator });
     return { total, items };
   }
 
   /**
-   * Count total transactions with optional filters.
+   * Count total transactions based on optional filters.
+   * @param masterBlockHash - optional hash to filter by.
    * @param sender - Optional sender address to filter by.
    * @param operator - Optional operator address to filter by.
-   * @returns A promise resolving to the total count of transactions.
+   * @returns A promise resolving to the total count of transactions that pass the filters.
    */
-  async countTotal({ sender, operator }: { sender?: string; operator?: string }): Promise<number> {
-    const qb = this.txRepo.createQueryBuilder('t').select('COUNT(*)', 'cnt');
-    if (sender) qb.andWhere('t.source_sender = :sender', { sender });
+  async countSelectedTotal({ masterBlockHash, sender, operator }: {
+    masterBlockHash?: string,
+    sender?: string;
+    operator?: string
+  }): Promise<number> {
+    const qb = this.txRepo.createQueryBuilder('tx').select('COUNT(*)', 'cnt');
+
+    if (masterBlockHash) {
+      qb.andWhere('tx.included_in_master_block = :mbh', { mbh: masterBlockHash });
+    }
+
+    if (sender)
+      qb.andWhere('tx.source_sender = :sender', { sender });
+
     if (operator) {
       qb.andWhere(
         `EXISTS (
-           SELECT 1 FROM execution_parts p
-           WHERE p.transaction_id = t.id
-             AND p.operator_address = :op
+           SELECT 1 FROM execution_parts ep
+           WHERE ep.transaction_id = tx.id
+             AND ep.operator_address = :op
          )`,
         { op: operator },
       );

@@ -32,6 +32,7 @@ export class TransactionService {
       take: qp.take,
       skip: qp.skip,
       includeParts: qp.includeParts,
+      masterBlockHash: qp.masterBlockHash,
       sender: qp.sender,
       operator: qp.operator,
     });
@@ -50,8 +51,12 @@ export class TransactionService {
     };
   }
 
-  async countTotal(params: { sender?: string; operator?: string } = {}): Promise<number> {
-    return this.repo.countTotal({ sender: params.sender, operator: params.operator });
+  async countTotal(params: { masterBlockHash?: string, sender?: string; operator?: string } = {}): Promise<number> {
+    return this.repo.countSelectedTotal({
+      masterBlockHash: params.masterBlockHash,
+      sender: params.sender,
+      operator: params.operator
+    });
   }
 
   /**
@@ -62,15 +67,20 @@ export class TransactionService {
     const anyT = tx as any;
     const base: any = {
       id: anyT.id,
+      version: anyT.version ?? null,
+      format: anyT.format ?? null,
       transactionHash: anyT.transactionHash ?? anyT.transaction_hash,
+      nonce: anyT.nonce ?? null,
       includedInMasterBlock: anyT.includedInMasterBlock ?? anyT.included_in_master_block ?? null,
       masterBlockHeight: anyT.masterBlock?.height ?? null,
       masterBlockTxIndex: anyT.masterBlockTransactionIndex ?? anyT.master_block_tx_index ?? null,
       sourceSender: anyT.sourceSender ?? anyT.source_sender ?? null,
       sourceChainId: anyT.sourceChainId ?? anyT.source_chain_id ?? null,
+      sourceChainMempoolEpoch: anyT.sourceChainMempoolEpoch ?? anyT.source_chain_mempool_epoch ?? null,
+      stateValidator: anyT.stateValidator ?? anyT.state_validator ?? null,
+      stateValidationResult: anyT.stateValidationResult ?? anyT.state_validation_result ?? null,
       state: anyT.state ?? null,
       result: anyT.result ?? null,
-      stateValidationResult: anyT.stateValidationResult ?? anyT.state_validation_result ?? null,
     };
 
     if (!includeParts) return base;

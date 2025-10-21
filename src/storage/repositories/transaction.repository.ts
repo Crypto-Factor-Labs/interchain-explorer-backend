@@ -1,10 +1,11 @@
 import type { TransactionEntity } from '../entities/transaction.entity.js';
 
 export interface ListTxFilters {
-  sender?: string;
-  operator?: string;
   take: number;
   skip: number;
+  masterBlockHash?: string;
+  sender?: string;
+  operator?: string;
   includeParts?: boolean;
 }
 
@@ -18,7 +19,7 @@ export const TX_REPO = Symbol('Tx_Repo');
 export interface TransactionRepository {
   findOneByHash(hash: string, includeParts?: boolean): Promise<TransactionEntity | null>;
   list(filters: ListTxFilters): Promise<ListResult<TransactionEntity>>;
-  countTotal(filters: Omit<ListTxFilters, 'take' | 'skip' | 'includeParts'>): Promise<number>;
+  countSelectedTotal(filters: Omit<ListTxFilters, 'take' | 'skip' | 'includeParts'>): Promise<number>;
 
   // Used by the indexer: upsert minimal tx row by hash
   upsertBasic(data: Partial<TransactionEntity> & { transactionHash: string }): Promise<TransactionEntity>;

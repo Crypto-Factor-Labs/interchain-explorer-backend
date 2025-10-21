@@ -7,10 +7,11 @@ export class TransactionController {
   constructor(private readonly txService: TransactionService) { }
 
   // GET /api/masterchain/transaction/:hash
+  @Get('transaction/:hash')
   async getOne(@Param('hash', new HashParamPipe()) hash: string) {
     const tx = await this.txService.findOneByHash(hash);
     if (!tx) throw new NotFoundException('Transaction not found');
-    return tx;
+    return tx; // full Transaction incl. parts & events
   }
 
   // GET /api/masterchain/transactions?nr=10&skip=0&includeParts=true&includeEvents=true&sender=...&operator=...
@@ -20,6 +21,7 @@ export class TransactionController {
     @Query('skip') skip: number = 0,
     @Query('includeParts') includeParts?: string | boolean,
     @Query('includeEvents') includeEvents?: string | boolean,
+    @Query('masterBlockHash') masterBlockHash?: string,
     @Query('sender') sender?: string,
     @Query('operator') operator?: string,
   ) {
@@ -27,14 +29,15 @@ export class TransactionController {
       return { msg: 'Invalid number of transactions to retrieve.' };
     }
 
-    const incParts = includeParts === true || includeParts === 'true' || includeParts === '1';
-    const incEvents = includeEvents === true || includeEvents === 'true' || includeEvents === '1';
+    const inclParts = includeParts === true || includeParts === 'true' || includeParts === '1';
+    const inclEvents = includeEvents === true || includeEvents === 'true' || includeEvents === '1';
 
     return this.txService.list({
       take: Number(nr),
       skip: Number(skip),
-      includeParts: incParts,
-      includeEvents: incEvents, // only applied if includeParts is true (service guards it)
+      includeParts: inclParts,
+      includeEvents: inclEvents, // only applied if includeParts is true (service guards it)
+      masterBlockHash,
       sender,
       operator,
     });
