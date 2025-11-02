@@ -4,9 +4,11 @@ import type { ChainEvents, ChainEventDto, ChainEventStatus, } from '../types/cha
 import { TransactionStateEnum } from '../common/transaction-state.enum.js';
 
 const toIso = (ms?: number | null) => (ms != null ? new Date(ms).toISOString() : undefined);
+const tsOf = (ce?: ChainEventEntity | null) => ce?.eventTimestamp ?? ce?.blockTimestamp ?? null;
 
-const pickTimestamp = (ce?: ChainEventEntity | null) => ({
-  timestamp: toIso(ce?.eventTimestamp ?? ce?.blockTimestamp),
+const pickMeta = (ce?: ChainEventEntity | null) => ({
+  timestamp: toIso(tsOf(ce)),
+  eventHash: ce?.eventHash || undefined,
 });
 
 export function buildChainEventsForEP(
@@ -48,7 +50,7 @@ export function buildChainEventsForEP(
   const step1: ChainEventDto = {
     name: 'Commit',
     status: s1Status,
-    ...pickTimestamp(commit ?? undefined),
+    ...pickMeta(commit ?? undefined),
   };
 
   // --- Step 2: Publish ---
@@ -65,7 +67,7 @@ export function buildChainEventsForEP(
   const step2: ChainEventDto = {
     name: 'Publish',
     status: s2Status,
-    ...pickTimestamp(publish ?? undefined),
+    ...pickMeta(publish ?? undefined),
   };
 
   // --- Step 3: Schedule ---
@@ -82,7 +84,7 @@ export function buildChainEventsForEP(
   const step3: ChainEventDto = {
     name: 'Schedule',
     status: s3Status,
-    ...pickTimestamp(schedule ?? undefined),
+    ...pickMeta(schedule ?? undefined),
   };
 
   // --- Step 4: Execute ---
@@ -103,7 +105,7 @@ export function buildChainEventsForEP(
   const step4: ChainEventDto = {
     name: 'Execute',
     status: s4Status,
-    ...pickTimestamp(execute ?? undefined),
+    ...pickMeta(execute ?? undefined),
   };
 
   return [step1, step2, step3, step4];
