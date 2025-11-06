@@ -8,7 +8,7 @@ const tsOf = (ce?: ChainEventEntity | null) => ce?.eventTimestamp ?? ce?.blockTi
 
 const pickMeta = (ce?: ChainEventEntity | null) => ({
   timestamp: toIso(tsOf(ce)),
-  eventHash: ce?.eventHash || undefined,
+  txHash: ce?.transactionHash || undefined,
 });
 
 export function buildChainEventsForEP(
