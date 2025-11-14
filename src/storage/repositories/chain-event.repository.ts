@@ -1,49 +1,50 @@
-import type { ChainEventEntity } from '../entities/chain-event.entity.js';
+import type { ExecResult, ValidationResult } from '../../reader-node/types/common.types.js';
+import { ChainEventEntity } from '../entities/chain-event.entity.js';
+
+export type ChainEventResult = ExecResult | ValidationResult | null;
 
 export const CHAIN_EVENT_REPO = 'CHAIN_EVENT_REPO';
 
-export interface UpsertChainEventInput {
-  // Block-level (required)
+/** Minimal normalized event payload (no IDs, no fingerprint) */
+export interface ChainEventPayload {
+  // block-level
   blockHash: string;
-  blockHeight: string;       // keep as decimal string
-  blockTimestamp: number;    // ms epoch
-  blockSubchain?: string | null;
+  blockHeight: string;
+  blockTimestamp: number;
+  blockSubchain: string | null;
 
-  // Transaction-level (optional)
-  transactionHash?: string | null;
-  transactionReceiver?: string | null;
-  transactionSender?: string | null;
-  transactionSubchain?: string | null;
-  transactionData?: string | null;
+  // tx-level
+  transactionHash: string | null;
+  transactionReceiver: string | null;
+  transactionSender: string | null;
+  transactionSubchain: string | null;
 
-  // Event-level (optional)
-  eventHash?: string | null;
-  eventTimestamp?: number | null;   // ms epoch
-  eventBlock?: string | null;
-  eventBlockHeight?: string | null; // decimal string
-  eventReceiver?: string | null;
-  eventSender?: string | null;
-  eventSubchain?: string | null;
-  eventData?: string | null;
+  // event-level
+  eventHash: string | null;  // may be empty/zero
+  eventTimestamp: number | null;
+  eventBlock: string | null;
+  eventBlockHeight: string | null;
+  eventReceiver: string | null;
+  eventSender: string | null;
+  eventSubchain: string | null;
 
-  // Metadata
-  type?: number | null;
-  encodableType?: number | null;
+  // meta
+  type: number | null;
+  encodableType: number | null;
 
-  // Execution result (nullable; 0=pending, 1=success, 2=failed)
-  result?: 0 | 1 | 2 | null;
+  // snapshot result (exec or validation context)
+  result: ChainEventResult;
+}
+
+/** Insert contract: fingerprint + payload */
+export interface InsertByFingerprintInput {
+  fingerprint: string;
+  payload: ChainEventPayload;
 }
 
 export interface ChainEventRepository {
-  /**
-   * Upsert a ChainEvent. Duplicate guard is `eventHash` when provided.
-   * - If eventHash is present and exists → update that row.
-   * - If eventHash is null/absent → insert a new row.
-   */
-  upsert(input: UpsertChainEventInput): Promise<ChainEventEntity>;
-
-  /**
-   * Find latest event by its event hash (exact match).
-   */
-  findByEventHash(hash: string): Promise<ChainEventEntity | null>;
+  insertIfMissingByFingerprint(input: InsertByFingerprintInput): Promise<ChainEventEntity>;
+  findById(id: string): Promise<ChainEventEntity | null>;
+  findByFingerprint(fp: string): Promise<ChainEventEntity | null>;
+  findByIds(ids: string[]): Promise<ChainEventEntity[]>;
 }

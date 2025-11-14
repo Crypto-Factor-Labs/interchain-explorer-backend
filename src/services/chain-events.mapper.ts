@@ -13,21 +13,24 @@ const pickMeta = (ce?: ChainEventEntity | null) => ({
 
 export function buildChainEventsForEP(
   ep: ExecutionPartEntity,
-  ceByHash: Map<string, ChainEventEntity>, // preloaded by WHERE event_hash IN (...)
+  ceById: Map<string, ChainEventEntity>, // preloaded via WHERE id IN (...)
   txState: number,
 ): ChainEvents {
-  // Fetch events by hash
-  const commit = ep.mempoolCommitEventHash
-    ? ceByHash.get(ep.mempoolCommitEventHash) ?? null
+
+  const commit = ep.mempoolCommitEventId
+    ? ceById.get(ep.mempoolCommitEventId) ?? null
     : null;
-  const publish = ep.targetPublishEventHash
-    ? ceByHash.get(ep.targetPublishEventHash) ?? null
+
+  const publish = ep.targetPublishEventId
+    ? ceById.get(ep.targetPublishEventId) ?? null
     : null;
-  const schedule = ep.targetSchedulingEventHash
-    ? ceByHash.get(ep.targetSchedulingEventHash) ?? null
+
+  const schedule = ep.targetSchedulingEventId
+    ? ceById.get(ep.targetSchedulingEventId) ?? null
     : null;
-  const execute = ep.targetExecutionEventHash
-    ? ceByHash.get(ep.targetExecutionEventHash) ?? null
+
+  const execute = ep.targetExecutionEventId
+    ? ceById.get(ep.targetExecutionEventId) ?? null
     : null;
 
   // Presence flags (normalize to booleans)

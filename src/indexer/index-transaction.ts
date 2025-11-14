@@ -2,7 +2,6 @@ import type { EntityManager } from 'typeorm';
 import type { Transaction } from '../reader-node/types/transaction.types.js';
 import { normalizeChainEvent, txHashFromEvent, resultFromEvent } from '../reader-node/ingest-helpers.js';
 import { TransactionEntity } from '../storage/entities/transaction.entity.js';
-import { upsertChainEvent } from './index-chain-event.js';
 import { indexExecutionPart } from './index-execution-part.js';
 
 /* Orchestrate indexing of a single JSON-Transaction.
@@ -19,8 +18,8 @@ export async function indexTransaction(
   const sourcePushEvt = normalizeChainEvent(tx.sourceChainPushEvent);
   const stateValidationEvt = normalizeChainEvent(tx.stateValidationEvent);
 
-  await upsertChainEvent(manager, sourcePushEvt, null);
-  await upsertChainEvent(manager, stateValidationEvt, resultFromEvent(tx.stateValidationEvent) ?? null);
+  //await upsertChainEvent(manager, sourcePushEvt, null);
+  //await upsertChainEvent(manager, stateValidationEvt, resultFromEvent(tx.stateValidationEvent) ?? null);
 
   // --- Upsert Transaction (idempotent via unique on transaction_hash) ---
   const txData: Partial<TransactionEntity> = {
@@ -59,14 +58,14 @@ export async function indexTransaction(
     ...(tx.revertExecutionPart ? [{ dto: tx.revertExecutionPart, isRevert: true as const }] : []),
   ];
 
-  for (const p of parts) {
+  for (const part of parts) {
     await indexExecutionPart(
       manager,
       txEntity,
       tx.transactionHash,
-      p.dto,
-      p.isRevert,
-      p.isRevert ? undefined : p.partIndex,
+      part.dto,
+      part.isRevert,
+      part.isRevert ? undefined : part.partIndex,
     );
   }
 }

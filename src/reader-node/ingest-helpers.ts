@@ -70,7 +70,7 @@ export const resultFromEvent = (evt?: any): TriState | undefined => {
 };
 
 /**
- * Normalize any ChainEvent-like payload (flat or nested) into our canonical ChainEvent:
+ * Normalize any ChainEvent-like payload (flat or nested) into a canonical ChainEvent:
  * - blockHeight / eventBlockHeight → decimal strings
  * - timestamps → milliseconds
  */
@@ -78,7 +78,7 @@ export function normalizeChainEvent(evt?: any): ChainEvent | undefined {
   const e = unwrapBlockchainEvent(evt);
   if (!e) return undefined;
 
-  // Required fields in our ChainEvent contract:
+  // Required fields in the ChainEvent contract:
   const blockHash = e.blockHash;
   const blockHeight = normalizeHeight(e.blockHeight);
   const blockTimestamp = toMs(e.blockTimestamp);

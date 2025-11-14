@@ -3,7 +3,7 @@ import { DataSource } from 'typeorm';
 import { ListTransactionsDto } from './dto/list-transactions.dto.js';
 import { TX_REPO, TransactionRepository } from '../storage/repositories/transaction.repository.js';
 import { TransactionEntity } from '../storage/entities/transaction.entity.js';
-import { collectEventHashesFromEPs, loadChainEventsMap } from '../services/chain-events.loader.js';
+import { collectEventIdsFromEPs, loadChainEventsMap } from '../services/chain-events.loader.js';
 import { buildChainEventsForEP } from '../services/chain-events.mapper.js';
 import type { ChainEvents } from '../types/chain-events.types.js';
 
@@ -21,8 +21,8 @@ export class TransactionService {
 
     // Build events for this one transaction (if it has parts)
     const eps = (tx as any).executionParts ?? [];
-    const hashes = collectEventHashesFromEPs(eps as any);
-    const ceMap = await loadChainEventsMap(this.ds.manager, hashes);
+    const ids = collectEventIdsFromEPs(eps as any);
+    const ceMap = await loadChainEventsMap(this.ds.manager, ids);
 
     return this.toDto(tx, true, ceMap);
   }
@@ -41,8 +41,8 @@ export class TransactionService {
     if (qp.includeParts && qp.includeEvents) {
       // Gather all EPs in this page and batch-load the related ChainEvents
       const allEPs = items.flatMap(t => ((t as any).executionParts ?? []));
-      const hashes = collectEventHashesFromEPs(allEPs as any);
-      ceMap = await loadChainEventsMap(this.ds.manager, hashes);
+      const ids = collectEventIdsFromEPs(allEPs as any);
+      ceMap = await loadChainEventsMap(this.ds.manager, ids);
     }
 
     return {

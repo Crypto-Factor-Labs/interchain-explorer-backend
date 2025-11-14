@@ -1,11 +1,5 @@
-// src/storage/entities/chain-event.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, Index } from 'typeorm';
-
-export enum ExecResult {
-  Pending = 0,
-  Success = 1,
-  Failed = 2,
-}
+import type { ExecResult } from '../../reader-node/types/common.types.js';
 
 // ms epoch (number) <-> timestamptz transformer
 const msEpoch: import('typeorm').ValueTransformer = {
@@ -17,10 +11,6 @@ const msEpoch: import('typeorm').ValueTransformer = {
 export class ChainEventEntity {
   @PrimaryGeneratedColumn('uuid', { name: 'id' })
   id!: string;
-
-  @Index('ix_chain_events_event_hash')
-  @Column({ name: 'event_hash', type: 'text', nullable: true })
-  eventHash?: string | null;
 
   // ---------- Block-level ----------
   @Index('ix_chain_events_block_hash')
@@ -51,11 +41,15 @@ export class ChainEventEntity {
   @Column({ name: 'transaction_subchain', type: 'text', nullable: true })
   transactionSubchain?: string | null;
 
-  @Column({ name: 'transaction_data', type: 'text', nullable: true })
-  transactionData?: string | null;
-
   // ---------- Event-level ----------
-  // Note: eventHash is at top-level
+  @Index('ix_chain_events_event_hash')
+  @Column({ name: 'event_hash', type: 'text', nullable: true })
+  eventHash?: string | null;
+
+  // eventHash can be null, therefore we need a separate unique fingerprint
+  @Index('ux_chain_events_event_fingerprint')
+  @Column({ name: 'event_fingerprint', type: 'text', nullable: true })
+  eventFingerprint!: string | null;
 
   @Column({ name: 'event_timestamp', type: 'timestamptz', nullable: true, transformer: msEpoch })
   eventTimestamp?: number | null; // ms
@@ -75,9 +69,6 @@ export class ChainEventEntity {
 
   @Column({ name: 'event_subchain', type: 'text', nullable: true })
   eventSubchain?: string | null;
-
-  @Column({ name: 'event_data', type: 'text', nullable: true })
-  eventData?: string | null;
 
   // ---------- Optional metadata ----------
   @Column({ name: 'type', type: 'integer', nullable: true })
