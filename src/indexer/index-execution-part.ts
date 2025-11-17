@@ -1,10 +1,11 @@
 import type { EntityManager } from 'typeorm';
 import type { Transaction } from '../reader-node/types/transaction.types.js';
 import { normalizeChainEvent, resultFromEvent } from '../reader-node/ingest-helpers.js';
+import { ExecResult } from '../reader-node/types/common.types.js';
 import type { TransactionEntity } from '../storage/entities/transaction.entity.js';
 import { ExecutionPartEntity } from '../storage/entities/execution-part.entity.js';
+import { ChainEventEntity } from '../storage/entities/chain-event.entity.js';
 import { insertChainEvent } from './index-chain-event.js';
-import { ExecResult } from 'src/reader-node/types/common.types.js';
 
 export async function indexExecutionPart(
   manager: EntityManager,
@@ -17,10 +18,10 @@ export async function indexExecutionPart(
   const partRepo = manager.getRepository(ExecutionPartEntity);
 
   // Normalize EP events
-  const schedEvt = normalizeChainEvent(dto.targetChainSchedulingEvent);
-  const publishEvt = normalizeChainEvent(dto.targetChainPublishEvent);
-  const execEvt = normalizeChainEvent(dto.targetChainExecutionEvent);
   const commitEvt = normalizeChainEvent(dto.mempoolEpochCommitEvent);
+  const publishEvt = normalizeChainEvent(dto.targetChainPublishEvent);
+  const schedEvt = normalizeChainEvent(dto.targetChainSchedulingEvent);
+  const execEvt = normalizeChainEvent(dto.targetChainExecutionEvent);
 
   const execRes: ExecResult | null = resultFromEvent(dto.targetChainExecutionEvent) ?? null;
 
@@ -54,6 +55,56 @@ export async function indexExecutionPart(
 
   // For each event-kind: if FK is missing --> insert-by-fingerprint --> set FK
 
+  // mempool_commit_event_id
+  if (!row.mempoolCommitEventId) {
+    let commitId: string | null = null;
+
+    // Prefer EP-level commit event if present
+    if (commitEvt) {
+      commitId = await insertChainEvent(
+        manager,
+        commitEvt,
+        { kind: 'ep.commit', transactionHash: txHash, partIndex: idx, isRevert, chainId: cid },
+        null,
+      );
+    }
+
+    // Fallback: PB-level commit event (by block_hash + kind)
+    if (!commitId && partData.includedInPartialBlock) {
+      commitId = await findPbEventIdByKind(manager, partData.includedInPartialBlock, 'pb.commit');
+    }
+
+    if (commitId) {
+      await partRepo.update({ id: row.id }, { mempoolCommitEventId: commitId });
+      (row as any).mempoolCommitEventId = commitId;
+    }
+  }
+
+  // target_publish_event_id
+  if (!row.targetPublishEventId) {
+    let publishId: string | null = null;
+
+    // Prefer EP-level publish event if present
+    if (publishEvt) {
+      publishId = await insertChainEvent(
+        manager,
+        publishEvt,
+        { kind: 'ep.publish', transactionHash: txHash, partIndex: idx, isRevert, chainId: cid },
+        null,
+      );
+    }
+
+    // Fallback: PB-level publish event for this partial block (by block_hash + kind)
+    if (!publishId && partData.includedInPartialBlock) {
+      publishId = await findPbEventIdByKind(manager, partData.includedInPartialBlock, 'pb.publish');
+    }
+
+    if (publishId) {
+      await partRepo.update({ id: row.id }, { targetPublishEventId: publishId });
+      (row as any).targetPublishEventId = publishId;
+    }
+  }
+
   // target_sched_event_id
   if (!row.targetSchedulingEventId && schedEvt) {
     const id = await insertChainEvent(
@@ -65,20 +116,6 @@ export async function indexExecutionPart(
     if (id) {
       await partRepo.update({ id: row.id }, { targetSchedulingEventId: id });
       row.targetSchedulingEventId = id;
-    }
-  }
-
-  // target_publish_event_id
-  if (!row.targetPublishEventId && publishEvt) {
-    const id = await insertChainEvent(
-      manager,
-      publishEvt,
-      { kind: 'ep.publish', transactionHash: txHash, partIndex: idx, isRevert, chainId: cid },
-      null,
-    );
-    if (id) {
-      await partRepo.update({ id: row.id }, { targetPublishEventId: id });
-      row.targetPublishEventId = id;
     }
   }
 
@@ -97,20 +134,28 @@ export async function indexExecutionPart(
     }
   }
 
-  // mempool_commit_event_id
-  if (!row.mempoolCommitEventId && commitEvt) {
-    const id = await insertChainEvent(
-      manager,
-      commitEvt,
-      { kind: 'ep.commit', transactionHash: txHash, partIndex: idx, isRevert, chainId: cid },
-      null,
-    );
-    if (id) {
-      await partRepo.update({ id: row.id }, { mempoolCommitEventId: id });
-      row.mempoolCommitEventId = id;
-    }
-  }
-
   // Persist any non-FK changes (idempotent)
   await partRepo.update({ id: row.id }, partData);
 }
+
+// Helper to find PB-level ChainEvent using the fingerprint
+// replace your current findPbEventIdByKind with this
+export async function findPbEventIdByKind(
+  manager: EntityManager,
+  partialBlockHash: string,
+  kind: 'pb.publish' | 'pb.commit',
+): Promise<string | null> {
+  if (!partialBlockHash) return null;
+
+  // Fingerprints we create: `${kind}|${partialBlockHash}|...`
+  const row = await manager.getRepository(ChainEventEntity)
+    .createQueryBuilder('ce')
+    .select(['ce.id'])
+    .where('ce.eventFingerprint LIKE :prefix', { prefix: `${kind}|${partialBlockHash}|%` })
+    .orderBy('ce.eventTimestamp', 'DESC', 'NULLS LAST')
+    .addOrderBy('ce.blockTimestamp', 'DESC')
+    .getOne();
+
+  return row?.id ?? null;
+}
+

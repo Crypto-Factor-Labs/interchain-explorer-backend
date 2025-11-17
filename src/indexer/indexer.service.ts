@@ -8,9 +8,10 @@ import { TransactionRepository, TX_REPO } from '../storage/repositories/transact
 import { IndexerLockRepository } from '../storage/repositories/indexer-lock.repository.js';
 import { TransactionEntity } from '../storage/entities/transaction.entity.js';
 import { PartialBlock } from '../reader-node/types/partialblock.types.js';
-import { resultFromEvent } from '../reader-node/ingest-helpers.js';
+import { normalizeChainEvent, resultFromEvent } from '../reader-node/ingest-helpers.js';
 import { indexMasterBlock } from './index-master-block.js';
 import { indexExecutionPart } from './index-execution-part.js';
+import { attachTxLevelEvents } from './index-tx-events.js';
 
 @Injectable()
 export class IndexerService {
@@ -157,48 +158,40 @@ export class IndexerService {
     const pending = await this.txRepo.getPending(batch);
     if (pending.length === 0) return;
 
-    this.logger.log(`🔁 Refreshing ${pending.length} pending Transactions...`);
+    this.logger.log(`🔁 Refreshing ${pending.length} pending transaction${pending.length === 1 ? '' : 's'}...`);
 
     for (const pendingTx of pending) {
       try {
         const rnTx = await this.rnService.fetchTransaction(pendingTx.transactionHash);
 
         await this.dataSource.transaction(async manager => {
-          // ---- Tx-level ChainEvents (push + state validation) ----
-          //const pushEvt = normalizeChainEvent(rnTx.sourceChainPushEvent);
-          //const svEvt = normalizeChainEvent(rnTx.stateValidationEvent);
-          const svRes = resultFromEvent(rnTx.stateValidationEvent) ?? null;
+          // ---- Tx-level events (push + state validation) ----
+          await attachTxLevelEvents(manager, pendingTx, rnTx);
 
-          // Upsert events first (so hashes exist if you reference them)
-          //const pushHash = await upsertChainEvent(manager, pushEvt, null);
-          //const svHash = await upsertChainEvent(manager, svEvt, svRes);
+          // ---- Patch evolving top-level fields ----
+          const svRes = resultFromEvent(normalizeChainEvent(rnTx.stateValidationEvent)) ?? null;
 
-          // ---- Patch top-level tx fields that may evolve while pending ----
           const patch: Partial<TransactionEntity> = {
             state: rnTx.state ?? pendingTx.state,
             result: rnTx.result ?? pendingTx.result,
-            //sourcePushTxHash: pushHash,
-            //stateValidationTxHash: svHash,
             stateValidationResult: svRes ?? pendingTx.stateValidationResult,
-            // masterBlockTransactionIndex: only if present (0 is valid!)
             ...(rnTx.masterBlockTransactionIndex != null
               ? { masterBlockTransactionIndex: rnTx.masterBlockTransactionIndex }
               : {}),
           };
 
-          // Only set if non-empty
           const includedIn = rnTx.includedInMasterBlock?.trim();
-          if (includedIn)
+          if (includedIn) {
             patch.includedInMasterBlock = includedIn;
-          else
-            if (pendingTx.includedInMasterBlock)
-              this.logger.warn(`Prevented to reset includedInMasterBlock | txHash = ${pendingTx.transactionHash}`)
+          } else if (pendingTx.includedInMasterBlock) {
+            this.logger.warn(`Prevented reset of includedInMasterBlock | txHash=${pendingTx.transactionHash}`);
+          }
 
           await manager.getRepository(TransactionEntity).update({ id: pendingTx.id }, patch);
 
-          // ---- Update the ExecutionParts (and their ChainEvents) via the existing method ----
+          // ---- Re-index ExecutionParts (and their ChainEvents) ----
           let autoIndex = 0;
-          for (const part of rnTx.executionParts) {
+          for (const part of rnTx.executionParts ?? []) {
             const partIdx = typeof part.transactionExecutionPartIndex === 'number'
               ? part.transactionExecutionPartIndex
               : autoIndex++;

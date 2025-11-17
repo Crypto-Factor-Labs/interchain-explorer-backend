@@ -2,15 +2,18 @@ export type EventKind =
   // tx-level (once per Tx)
   | 'tx.push'
   | 'tx.state_validation'
+  // partial-block level (once per PB)
+  | 'pb.commit'
+  | 'pb.publish'
   // execution-part level (per EP)
-  | 'ep.scheduling'
+  | 'ep.commit'
   | 'ep.publish'
+  | 'ep.scheduling'
   | 'ep.execution'
-  | 'ep.commit';
 
 export interface FingerprintInput {
   kind: EventKind;
-  transactionHash: string;
+  transactionHash: string;     // for PB-events, use the PartialBlock hash
   partIndex?: number | null;   // ep.* only
   isRevert?: boolean;          // ep.* only
   chainId?: number | null;     // optional, stabilizes uniqueness
@@ -18,8 +21,9 @@ export interface FingerprintInput {
 
 /**
  * Deterministic fingerprint:
- *   tx.* → "<kind>|<txHash>|0|0"
- *   ep.* → "<kind>|<txHash>|<partOrd>|<chainIdOr0>"
+ *  tx.* → "<kind>|<txHash>|0|0"
+ *  pb.* → "<kind>|<txHash>|0|0"
+ *  ep.* → "<kind>|<txHash>|<partOrd>|<chainIdOr0>"
  * where partOrd = isRevert ? -1 : (partIndex ?? 0)
  */
 export function computeEventFingerprint(input: FingerprintInput): string {

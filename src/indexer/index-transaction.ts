@@ -1,25 +1,18 @@
-import type { EntityManager } from 'typeorm';
-import type { Transaction } from '../reader-node/types/transaction.types.js';
-import { normalizeChainEvent, txHashFromEvent, resultFromEvent } from '../reader-node/ingest-helpers.js';
+import { EntityManager } from 'typeorm';
 import { TransactionEntity } from '../storage/entities/transaction.entity.js';
+import type { Transaction } from '../reader-node/types/transaction.types.js';
 import { indexExecutionPart } from './index-execution-part.js';
+import { normalizeChainEvent, resultFromEvent } from '../reader-node/ingest-helpers.js';
+import { attachTxLevelEvents } from './index-tx-events.js';
 
-/* Orchestrate indexing of a single JSON-Transaction.
- * - Idempotent writes for Transaction, ExecutionParts, and ChainEvents
- * - All operations use the provided EntityManager (single DB tx)
- */
 export async function indexTransaction(
   tx: Transaction,
   manager: EntityManager,
 ): Promise<void> {
   const txRepo = manager.getRepository(TransactionEntity);
 
-  // --- Normalize & persist top-level ChainEvents (optional, but useful) ---
-  const sourcePushEvt = normalizeChainEvent(tx.sourceChainPushEvent);
+  // Used to derive the tri-state result for the tx row
   const stateValidationEvt = normalizeChainEvent(tx.stateValidationEvent);
-
-  //await upsertChainEvent(manager, sourcePushEvt, null);
-  //await upsertChainEvent(manager, stateValidationEvt, resultFromEvent(tx.stateValidationEvent) ?? null);
 
   // --- Upsert Transaction (idempotent via unique on transaction_hash) ---
   const txData: Partial<TransactionEntity> = {
@@ -31,11 +24,7 @@ export async function indexTransaction(
     state: tx.state,
     includedInMasterBlock: tx.includedInMasterBlock,
     masterBlockTransactionIndex: tx.masterBlockTransactionIndex,
-
-    // Tx-level link fields
-    sourcePushTxHash: txHashFromEvent(sourcePushEvt) ?? null,
-    stateValidationTxHash: txHashFromEvent(stateValidationEvt) ?? null,
-    stateValidationResult: resultFromEvent(tx.stateValidationEvent) ?? null,
+    stateValidationResult: resultFromEvent(stateValidationEvt) ?? null,
   };
 
   let txEntity = await txRepo.findOne({ where: { transactionHash: tx.transactionHash } });
@@ -52,9 +41,16 @@ export async function indexTransaction(
     await txRepo.update({ id: txEntity.id }, txData);
   }
 
+  // --- Tx-level events (source push + state validation) ---
+  await attachTxLevelEvents(manager, txEntity, tx);
+
   // --- Index ExecutionParts (non-revert + optional revert) ---
   const parts = [
-    ...(tx.executionParts ?? []).map(p => ({ dto: p, isRevert: false as const, partIndex: p.transactionExecutionPartIndex })),
+    ...(tx.executionParts ?? []).map(p => ({
+      dto: p,
+      isRevert: false as const,
+      partIndex: p.transactionExecutionPartIndex,
+    })),
     ...(tx.revertExecutionPart ? [{ dto: tx.revertExecutionPart, isRevert: true as const }] : []),
   ];
 
