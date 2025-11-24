@@ -4,28 +4,33 @@ import type { ChainEvents, ChainEventDto, ChainEventStatus, } from '../types/cha
 import { TransactionStateEnum } from '../common/transaction-state.enum.js';
 
 const toIso = (ms?: number | null) => (ms != null ? new Date(ms).toISOString() : undefined);
+const tsOf = (ce?: ChainEventEntity | null) => ce?.eventTimestamp ?? ce?.blockTimestamp ?? null;
 
-const pickTimestamp = (ce?: ChainEventEntity | null) => ({
-  timestamp: toIso(ce?.eventTimestamp ?? ce?.blockTimestamp),
+const pickMeta = (ce?: ChainEventEntity | null) => ({
+  timestamp: toIso(tsOf(ce)),
+  txHash: ce?.transactionHash || undefined,
 });
 
 export function buildChainEventsForEP(
   ep: ExecutionPartEntity,
-  ceByHash: Map<string, ChainEventEntity>, // preloaded by WHERE event_hash IN (...)
+  ceById: Map<string, ChainEventEntity>, // preloaded via WHERE id IN (...)
   txState: number,
 ): ChainEvents {
-  // Fetch events by hash
-  const commit = ep.mempoolCommitEventHash
-    ? ceByHash.get(ep.mempoolCommitEventHash) ?? null
+
+  const commit = ep.mempoolCommitEventId
+    ? ceById.get(ep.mempoolCommitEventId) ?? null
     : null;
-  const publish = ep.targetPublishEventHash
-    ? ceByHash.get(ep.targetPublishEventHash) ?? null
+
+  const publish = ep.targetPublishEventId
+    ? ceById.get(ep.targetPublishEventId) ?? null
     : null;
-  const schedule = ep.targetSchedulingEventHash
-    ? ceByHash.get(ep.targetSchedulingEventHash) ?? null
+
+  const schedule = ep.targetSchedulingEventId
+    ? ceById.get(ep.targetSchedulingEventId) ?? null
     : null;
-  const execute = ep.targetExecutionEventHash
-    ? ceByHash.get(ep.targetExecutionEventHash) ?? null
+
+  const execute = ep.targetExecutionEventId
+    ? ceById.get(ep.targetExecutionEventId) ?? null
     : null;
 
   // Presence flags (normalize to booleans)
@@ -48,7 +53,7 @@ export function buildChainEventsForEP(
   const step1: ChainEventDto = {
     name: 'Commit',
     status: s1Status,
-    ...pickTimestamp(commit ?? undefined),
+    ...pickMeta(commit ?? undefined),
   };
 
   // --- Step 2: Publish ---
@@ -65,7 +70,7 @@ export function buildChainEventsForEP(
   const step2: ChainEventDto = {
     name: 'Publish',
     status: s2Status,
-    ...pickTimestamp(publish ?? undefined),
+    ...pickMeta(publish ?? undefined),
   };
 
   // --- Step 3: Schedule ---
@@ -82,7 +87,7 @@ export function buildChainEventsForEP(
   const step3: ChainEventDto = {
     name: 'Schedule',
     status: s3Status,
-    ...pickTimestamp(schedule ?? undefined),
+    ...pickMeta(schedule ?? undefined),
   };
 
   // --- Step 4: Execute ---
@@ -103,7 +108,7 @@ export function buildChainEventsForEP(
   const step4: ChainEventDto = {
     name: 'Execute',
     status: s4Status,
-    ...pickTimestamp(execute ?? undefined),
+    ...pickMeta(execute ?? undefined),
   };
 
   return [step1, step2, step3, step4];

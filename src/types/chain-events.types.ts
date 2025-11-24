@@ -10,6 +10,7 @@ export interface ChainEventDto {
   name: string;
   status: ChainEventStatus;
   timestamp?: string;   // ISO
+  txHash?: string;
 }
 
 export type ChainEvents = [ChainEventDto, ChainEventDto, ChainEventDto, ChainEventDto];

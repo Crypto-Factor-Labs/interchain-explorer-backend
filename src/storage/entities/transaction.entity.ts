@@ -38,6 +38,13 @@ export class TransactionEntity {
   masterBlockTransactionIndex!: number;
 
   // Events we care about for linking later
+  @Column({ name: 'source_chain_push_event_id', type: 'uuid', nullable: true })
+  sourceChainPushEventId!: string | null;
+
+  @Column({ name: 'state_validation_event_id', type: 'uuid', nullable: true })
+  stateValidationEventId!: string | null;
+
+
   @Column({ name: 'source_push_tx_hash', type: 'text', nullable: true })
   sourcePushTxHash!: string | null;
 

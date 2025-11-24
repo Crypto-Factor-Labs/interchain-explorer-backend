@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import type { ChainEventRepository, UpsertChainEventInput } from './chain-event.repository.js';
+import { DataSource, In, Repository, DeepPartial } from 'typeorm';
+import type { ChainEventRepository, InsertByFingerprintInput } from './chain-event.repository.js';
 import { ChainEventEntity } from '../entities/chain-event.entity.js';
 
 @Injectable()
@@ -10,51 +10,78 @@ export class ChainEventPostgresRepository implements ChainEventRepository {
     this.repo = ds.getRepository(ChainEventEntity);
   }
 
-  async upsert(input: UpsertChainEventInput): Promise<ChainEventEntity> {
-    const entity = this.repo.create({
-      eventHash: input.eventHash ?? null,
-      eventTimestamp: input.eventTimestamp ?? null,
-      eventBlock: input.eventBlock ?? null,
-      eventBlockHeight: input.eventBlockHeight ?? null,
-      eventReceiver: input.eventReceiver ?? null,
-      eventSender: input.eventSender ?? null,
-      eventSubchain: input.eventSubchain ?? null,
-      eventData: input.eventData ?? null,
+  /**
+   * Insert once, keyed by event_fingerprint.
+   * - If a row with the same fingerprint already exists, return it (no updates).
+   * - Otherwise insert a new row with that fingerprint + payload.
+   */
+  async insertIfMissingByFingerprint(input: InsertByFingerprintInput): Promise<ChainEventEntity> {
+    const { fingerprint: eventFingerprint, payload } = input;
 
-      transactionHash: input.transactionHash ?? null,
-      transactionReceiver: input.transactionReceiver ?? null,
-      transactionSender: input.transactionSender ?? null,
-      transactionSubchain: input.transactionSubchain ?? null,
-      transactionData: input.transactionData ?? null,
+    // Return existing if present
+    const existing = await this.findByFingerprint(eventFingerprint);
+    if (existing) return existing;
 
-      blockHash: input.blockHash,
-      blockHeight: input.blockHeight,
-      blockTimestamp: input.blockTimestamp,
-      blockSubchain: input.blockSubchain ?? null,
+    // Prepare entity
+    const data: DeepPartial<ChainEventEntity> = {
+      eventFingerprint,
 
-      type: input.type ?? null,
-      encodableType: input.encodableType ?? null,
-      result: input.result ?? null,
-    });
+      // event-level
+      eventHash: payload.eventHash,
+      eventTimestamp: payload.eventTimestamp,
+      eventBlock: payload.eventBlock,
+      eventBlockHeight: payload.eventBlockHeight,
+      eventReceiver: payload.eventReceiver,
+      eventSender: payload.eventSender,
+      eventSubchain: payload.eventSubchain,
 
-    // Guard: if we have eventHash, do a real UPSERT on that column
-    if (input.eventHash) {
-      await this.repo.upsert(entity, { conflictPaths: ['eventHash'], skipUpdateIfNoValuesChanged: true });
-      // Return the updated row
-      const row = await this.findByEventHash(input.eventHash);
+      // tx-level
+      transactionHash: payload.transactionHash,
+      transactionReceiver: payload.transactionReceiver,
+      transactionSender: payload.transactionSender,
+      transactionSubchain: payload.transactionSubchain,
+
+      // block-level
+      blockHash: payload.blockHash,
+      blockHeight: payload.blockHeight,
+      blockTimestamp: payload.blockTimestamp,
+      blockSubchain: payload.blockSubchain,
+
+      // meta
+      type: payload.type,
+      encodableType: payload.encodableType,
+
+      // result snapshot (nullable)
+      result: payload.result ?? null,
+    };
+
+    const entity = this.repo.create(data);
+
+    // Insert; if concurrent writer raced us, unique violation → select again.
+    try {
+      const saved = await this.repo.save(entity);
+      return saved;
+    } catch (e: any) {
+      // 23505 = unique_violation
+      if (e?.code !== '23505') throw e;
+      const row = await this.findByFingerprint(eventFingerprint);
       if (row) return row;
-      // Fallback (shouldn’t happen): read-after-write miss
+      // Extremely unlikely: if still missing, rethrow
+      throw e;
     }
-    // No eventHash → plain insert
-    return this.repo.save(entity);
   }
 
-  async findByEventHash(hash: string): Promise<ChainEventEntity | null> {
-    return this.repo
-      .createQueryBuilder('e')
-      .where('e.eventHash = :hash', { hash })
-      .orderBy('e.eventTimestamp', 'DESC', 'NULLS LAST')
-      .addOrderBy('e.blockTimestamp', 'DESC')
-      .getOne();
+  async findById(id: string): Promise<ChainEventEntity | null> {
+    return this.repo.findOne({ where: { id } });
+  }
+
+  async findByFingerprint(fp: string): Promise<ChainEventEntity | null> {
+    return this.repo.findOne({ where: { eventFingerprint: fp } });
+  }
+
+  async findByIds(ids: string[]): Promise<ChainEventEntity[]> {
+    if (!ids?.length) return [];
+    const unique = Array.from(new Set(ids));
+    return this.repo.find({ where: { id: In(unique) } });
   }
 }

@@ -6,6 +6,7 @@ import {
 } from 'typeorm';
 import type { PartialChainBlockEntity } from './partial-chain-block.entity.js';
 import type { TransactionEntity } from './transaction.entity.js';
+import { ExecResult } from '../../reader-node/types/common.types.js';
 
 @Entity({ name: 'execution_parts' })
 @Index('ux_exec_parts_txhash_partindex_isrevert', ['transactionHash', 'partIndex', 'isRevert'], { unique: true })
@@ -44,26 +45,27 @@ export class ExecutionPartEntity {
   partialBlockPartIndex!: number | null;
 
   // Links to ChainEvents
-  @Column({ name: 'target_sched_event_hash', type: 'text', nullable: true })
-  targetSchedulingEventHash!: string | null;
+  @Column({ name: 'target_scheduling_event_id', type: 'uuid', nullable: true })
+  targetSchedulingEventId!: string | null;
 
-  @Column({ name: 'target_publish_event_hash', type: 'text', nullable: true })
-  targetPublishEventHash!: string | null;
+  @Column({ name: 'target_publish_event_id', type: 'uuid', nullable: true })
+  targetPublishEventId!: string | null;
 
-  @Column({ name: 'target_exec_event_hash', type: 'text', nullable: true })
-  targetExecutionEventHash!: string | null;
+  @Column({ name: 'target_execution_event_id', type: 'uuid', nullable: true })
+  targetExecutionEventId!: string | null;
 
-  @Column({ name: 'target_exec_result', type: 'smallint', nullable: true })
-  targetExecutionResult!: number | null; // 0=pending,1=success,2=failed
-
-  @Column({ name: 'mempool_commit_event_hash', type: 'text', nullable: true })
-  mempoolCommitEventHash!: string | null;
+  @Column({ name: 'mempool_commit_event_id', type: 'uuid', nullable: true })
+  mempoolCommitEventId!: string | null;
 
   @Column({ name: 'mempool_epoch_consensus_proof', type: 'text', nullable: true })
   mempoolEpochConsensusProof!: string | null;
 
   @Column({ name: 'mempool_epoch_evm_proof', type: 'text', nullable: true })
   mempoolEpochEVMProof!: string | null;
+
+  @Column({ name: 'target_exec_result', type: 'smallint', nullable: true })
+  targetExecutionResult!: ExecResult | null; // 0=pending,1=success,2=failed
+
 
   @ManyToOne(
     'TransactionEntity',
