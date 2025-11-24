@@ -22,9 +22,7 @@ import {
     ExecPartsAndTxHashUniqueIndexes1710765072074
 } from "./storage/migration/1710765072074-execparts-and-txhash-unique-indexes.js";
 import {CreateChainEvents1710765072075} from "./storage/migration/1710765072075-create-chain-events.js";
-import {
-    ReplaceTxHashesWithEventHashes1710765072076
-} from "./storage/migration/1710765072076-replace-tx-hashes-with-event-hashes.js";
+import {RefactorChainEvents1710765072076} from "./storage/migration/1710765072076-refactor-chain-events.js";
 dotenv.config();
 
 export const DATA_SOURCE_OPTIONS: DataSourceOptions = {
@@ -56,7 +54,7 @@ export const DATA_SOURCE_OPTIONS: DataSourceOptions = {
       PartialBlockHeightsAndTimestamps1710765072073,
       ExecPartsAndTxHashUniqueIndexes1710765072074,
       CreateChainEvents1710765072075,
-      ReplaceTxHashesWithEventHashes1710765072076
+      RefactorChainEvents1710765072076
   ],
   migrationsRun: true,
 };
