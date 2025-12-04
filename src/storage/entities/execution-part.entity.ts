@@ -63,9 +63,11 @@ export class ExecutionPartEntity {
   @Column({ name: 'mempool_epoch_evm_proof', type: 'text', nullable: true })
   mempoolEpochEVMProof!: string | null;
 
+  @Column({ name: 'execution_signature', type: 'text', nullable: true })
+  executionSignature!: string | null;
+
   @Column({ name: 'target_exec_result', type: 'smallint', nullable: true })
   targetExecutionResult!: ExecResult | null; // 0=pending,1=success,2=failed
-
 
   @ManyToOne(
     'TransactionEntity',

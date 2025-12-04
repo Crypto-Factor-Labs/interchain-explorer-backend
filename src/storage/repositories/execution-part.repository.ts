@@ -13,6 +13,7 @@ export interface UpsertPartInput {
   operatorAddress?: string;
   senderAddress?: string;
   includedInPartialBlock?: string;
+  executionSignature?: string;
 }
 
 export interface ExecutionPartRepository {

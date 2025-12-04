@@ -131,6 +131,7 @@ export class TransactionService {
       partialBlockPartIndex: pick(ep, 'partialBlockPartIndex', 'partial_block_part_index') ?? null,
       operatorAddress: pick(ep, 'operatorAddress', 'operator_address') ?? null,
       senderAddress: pick(ep, 'senderAddress', 'sender_address') ?? null,
+      executionSignature: pick(ep, 'executionSignature', 'execution_signature') ?? null,
 
       // 4-step progress (only present when includeEvents=true)
       ...(eventsById ? { events: eventsById.get(ep.id) } : {}),
