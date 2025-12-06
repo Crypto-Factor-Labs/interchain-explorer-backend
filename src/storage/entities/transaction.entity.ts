@@ -44,9 +44,8 @@ export class TransactionEntity {
   @Column({ name: 'state_validation_event_id', type: 'uuid', nullable: true })
   stateValidationEventId!: string | null;
 
-
   @Column({ name: 'source_push_tx_hash', type: 'text', nullable: true })
-  sourcePushTxHash!: string | null;
+  sourceChainPushTxHash!: string | null;
 
   @Column({ name: 'state_validation_tx_hash', type: 'text', nullable: true })
   stateValidationTxHash!: string | null;

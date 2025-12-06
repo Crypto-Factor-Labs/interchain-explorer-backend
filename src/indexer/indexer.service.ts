@@ -8,10 +8,9 @@ import { TransactionRepository, TX_REPO } from '../storage/repositories/transact
 import { IndexerLockRepository } from '../storage/repositories/indexer-lock.repository.js';
 import { TransactionEntity } from '../storage/entities/transaction.entity.js';
 import { PartialBlock } from '../reader-node/types/partialblock.types.js';
-import { normalizeChainEvent, resultFromEvent } from '../reader-node/ingest-helpers.js';
 import { indexMasterBlock } from './index-master-block.js';
 import { indexExecutionPart } from './index-execution-part.js';
-import { attachTxLevelEvents } from './index-tx-events.js';
+import { ensureTxLevelEvents } from './tx-event-helpers.js';
 
 @Injectable()
 export class IndexerService {
@@ -166,26 +165,30 @@ export class IndexerService {
 
         await this.dataSource.transaction(async manager => {
           // ---- Tx-level events (push + state validation) ----
-          await attachTxLevelEvents(manager, pendingTx, rnTx);
+          const { pushId, svId, pushHash, svHash, svRes } =
+            await ensureTxLevelEvents(manager, pendingTx.transactionHash, rnTx);
 
-          // ---- Patch evolving top-level fields ----
-          const svRes = resultFromEvent(normalizeChainEvent(rnTx.stateValidationEvent)) ?? null;
-
+          // ---- Patch evolving top-level fields (include FKs + hashes) ----
           const patch: Partial<TransactionEntity> = {
             state: rnTx.state ?? pendingTx.state,
             result: rnTx.result ?? pendingTx.result,
             stateValidationResult: svRes ?? pendingTx.stateValidationResult,
+            sourceChainPushEventId: pushId,
+            stateValidationEventId: svId,
+            sourceChainPushTxHash: pushHash,
+            stateValidationTxHash: svHash,
             ...(rnTx.masterBlockTransactionIndex != null
               ? { masterBlockTransactionIndex: rnTx.masterBlockTransactionIndex }
               : {}),
           };
 
+          // included_in_master_block should never be cleared once set
           const includedIn = rnTx.includedInMasterBlock?.trim();
-          if (includedIn) {
-            patch.includedInMasterBlock = includedIn;
-          } else if (pendingTx.includedInMasterBlock) {
+          if (includedIn) patch.includedInMasterBlock = includedIn;
+          else if (pendingTx.includedInMasterBlock)
             this.logger.warn(`Prevented reset of includedInMasterBlock | txHash=${pendingTx.transactionHash}`);
-          }
+
+          await manager.getRepository(TransactionEntity).update({ id: pendingTx.id }, patch);
 
           await manager.getRepository(TransactionEntity).update({ id: pendingTx.id }, patch);
 

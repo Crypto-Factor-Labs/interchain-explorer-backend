@@ -77,8 +77,13 @@ export class TransactionService {
       sourceSender: anyT.sourceSender ?? anyT.source_sender ?? null,
       sourceChainId: anyT.sourceChainId ?? anyT.source_chain_id ?? null,
       sourceChainMempoolEpoch: anyT.sourceChainMempoolEpoch ?? anyT.source_chain_mempool_epoch ?? null,
+      sourceChainPushTxHash:
+        anyT.sourceChainPushTxHash ?? anyT.source_push_tx_hash ?? null,
+      stateValidationTxHash:
+        anyT.stateValidationTxHash ?? anyT.state_validation_tx_hash ?? null,
       stateValidator: anyT.stateValidator ?? anyT.state_validator ?? null,
       stateValidationResult: anyT.stateValidationResult ?? anyT.state_validation_result ?? null,
+
       state: anyT.state ?? null,
       result: anyT.result ?? null,
     };

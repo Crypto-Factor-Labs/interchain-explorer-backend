@@ -2,8 +2,7 @@ import { EntityManager } from 'typeorm';
 import { TransactionEntity } from '../storage/entities/transaction.entity.js';
 import type { Transaction } from '../reader-node/types/transaction.types.js';
 import { indexExecutionPart } from './index-execution-part.js';
-import { normalizeChainEvent, resultFromEvent } from '../reader-node/ingest-helpers.js';
-import { attachTxLevelEvents } from './index-tx-events.js';
+import { ensureTxLevelEvents } from './tx-event-helpers.js';
 
 export async function indexTransaction(
   tx: Transaction,
@@ -11,10 +10,7 @@ export async function indexTransaction(
 ): Promise<void> {
   const txRepo = manager.getRepository(TransactionEntity);
 
-  // Used to derive the tri-state result for the tx row
-  const stateValidationEvt = normalizeChainEvent(tx.stateValidationEvent);
-
-  // --- Upsert Transaction (idempotent via unique on transaction_hash) ---
+  // --- Upsert Transaction (unique on transaction_hash) ---
   const txData: Partial<TransactionEntity> = {
     transactionHash: tx.transactionHash,
     sourceSender: tx.sourceSender,
@@ -24,14 +20,13 @@ export async function indexTransaction(
     state: tx.state,
     includedInMasterBlock: tx.includedInMasterBlock,
     masterBlockTransactionIndex: tx.masterBlockTransactionIndex,
-    stateValidationResult: resultFromEvent(stateValidationEvt) ?? null,
   };
 
   let txEntity = await txRepo.findOne({ where: { transactionHash: tx.transactionHash } });
   if (!txEntity) {
     txEntity = txRepo.create(txData);
     await txRepo.insert(txEntity).catch(async (e: any) => {
-      if (e?.code !== '23505') throw e;
+      if (e?.code !== '23505') throw e; // unique violation → update
       await txRepo.update({ transactionHash: tx.transactionHash }, txData);
     });
     txEntity = txEntity.id
@@ -41,27 +36,42 @@ export async function indexTransaction(
     await txRepo.update({ id: txEntity.id }, txData);
   }
 
-  // --- Tx-level events (source push + state validation) ---
-  await attachTxLevelEvents(manager, txEntity, tx);
+  // Ensure tx-level events exist and get their ids/hashes/results
+  {
+    const { pushId, svId, pushHash, svHash, svRes } =
+      await ensureTxLevelEvents(manager, tx.transactionHash, tx);
 
-  // --- Index ExecutionParts (non-revert + optional revert) ---
-  const parts = [
-    ...(tx.executionParts ?? []).map(p => ({
-      dto: p,
-      isRevert: false as const,
-      partIndex: p.transactionExecutionPartIndex,
-    })),
-    ...(tx.revertExecutionPart ? [{ dto: tx.revertExecutionPart, isRevert: true as const }] : []),
-  ];
+    await txRepo.update({ id: txEntity.id }, {
+      sourceChainPushEventId: pushId,
+      stateValidationEventId: svId,
+      sourceChainPushTxHash: pushHash,
+      stateValidationTxHash: svHash,
+      stateValidationResult: svRes,
+    });
 
-  for (const part of parts) {
-    await indexExecutionPart(
-      manager,
-      txEntity,
-      tx.transactionHash,
-      part.dto,
-      part.isRevert,
-      part.isRevert ? undefined : part.partIndex,
-    );
+    // Keep entity object in sync if you reuse it below
+    txEntity.sourceChainPushEventId = pushId ?? null;
+    txEntity.stateValidationEventId = svId ?? null;
+
+    // --- Index ExecutionParts (non-revert + optional revert) ---
+    const parts = [
+      ...(tx.executionParts ?? []).map(p => ({
+        dto: p,
+        isRevert: false as const,
+        partIndex: p.transactionExecutionPartIndex,
+      })),
+      ...(tx.revertExecutionPart ? [{ dto: tx.revertExecutionPart, isRevert: true as const }] : []),
+    ];
+
+    for (const part of parts) {
+      await indexExecutionPart(
+        manager,
+        txEntity,
+        tx.transactionHash,
+        part.dto,
+        part.isRevert,
+        part.isRevert ? undefined : part.partIndex,
+      );
+    }
   }
 }
