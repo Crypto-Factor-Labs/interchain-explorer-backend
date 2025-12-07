@@ -3,6 +3,7 @@ import { TransactionEntity } from '../storage/entities/transaction.entity.js';
 import type { Transaction } from '../reader-node/types/transaction.types.js';
 import { indexExecutionPart } from './index-execution-part.js';
 import { ensureTxLevelEvents } from './tx-event-helpers.js';
+import { BN } from '@partisiablockchain/abi-client';
 
 export async function indexTransaction(
   tx: Transaction,
@@ -20,6 +21,7 @@ export async function indexTransaction(
     state: tx.state,
     includedInMasterBlock: tx.includedInMasterBlock,
     masterBlockTransactionIndex: tx.masterBlockTransactionIndex,
+    ...(tx.feePerUnit != null ? { feePerUnit: new BN(String(tx.feePerUnit), 10) } : {}),
   };
 
   let txEntity = await txRepo.findOne({ where: { transactionHash: tx.transactionHash } });

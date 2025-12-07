@@ -1,7 +1,7 @@
 import type { EntityManager } from 'typeorm';
 import type { Transaction } from '../reader-node/types/transaction.types.js';
-import type { ExecResult, ValidationResult } from '../reader-node/types/common.types.js';
 import { normalizeChainEvent, txHashFromEvent, resultFromEvent } from '../reader-node/ingest-helpers.js';
+import type { ExecResult, ValidationResult } from '../reader-node/types/common.types.js';
 import { insertChainEvent } from './index-chain-event.js';
 
 export interface TxEventOutcome {

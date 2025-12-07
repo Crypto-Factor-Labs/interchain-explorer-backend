@@ -71,7 +71,9 @@ export class TransactionService {
       format: anyT.format ?? null,
       transactionHash: anyT.transactionHash ?? anyT.transaction_hash,
       nonce: anyT.nonce ?? null,
+      state: anyT.state ?? null,
       includedInMasterBlock: anyT.includedInMasterBlock ?? anyT.included_in_master_block ?? null,
+      feePerUnit: anyT.feePerUnit?.toString() ?? null,
       masterBlockHeight: anyT.masterBlock?.height ?? null,
       masterBlockTxIndex: anyT.masterBlockTransactionIndex ?? anyT.master_block_tx_index ?? null,
       sourceSender: anyT.sourceSender ?? anyT.source_sender ?? null,
@@ -84,7 +86,6 @@ export class TransactionService {
       stateValidator: anyT.stateValidator ?? anyT.state_validator ?? null,
       stateValidationResult: anyT.stateValidationResult ?? anyT.state_validation_result ?? null,
 
-      state: anyT.state ?? null,
       result: anyT.result ?? null,
     };
 
