@@ -71,15 +71,21 @@ export class TransactionService {
       format: anyT.format ?? null,
       transactionHash: anyT.transactionHash ?? anyT.transaction_hash,
       nonce: anyT.nonce ?? null,
+      state: anyT.state ?? null,
       includedInMasterBlock: anyT.includedInMasterBlock ?? anyT.included_in_master_block ?? null,
+      feePerUnit: anyT.feePerUnit?.toString() ?? null,
       masterBlockHeight: anyT.masterBlock?.height ?? null,
       masterBlockTxIndex: anyT.masterBlockTransactionIndex ?? anyT.master_block_tx_index ?? null,
       sourceSender: anyT.sourceSender ?? anyT.source_sender ?? null,
       sourceChainId: anyT.sourceChainId ?? anyT.source_chain_id ?? null,
       sourceChainMempoolEpoch: anyT.sourceChainMempoolEpoch ?? anyT.source_chain_mempool_epoch ?? null,
+      sourceChainPushTxHash:
+        anyT.sourceChainPushTxHash ?? anyT.source_push_tx_hash ?? null,
+      stateValidationTxHash:
+        anyT.stateValidationTxHash ?? anyT.state_validation_tx_hash ?? null,
       stateValidator: anyT.stateValidator ?? anyT.state_validator ?? null,
       stateValidationResult: anyT.stateValidationResult ?? anyT.state_validation_result ?? null,
-      state: anyT.state ?? null,
+
       result: anyT.result ?? null,
     };
 
@@ -131,6 +137,7 @@ export class TransactionService {
       partialBlockPartIndex: pick(ep, 'partialBlockPartIndex', 'partial_block_part_index') ?? null,
       operatorAddress: pick(ep, 'operatorAddress', 'operator_address') ?? null,
       senderAddress: pick(ep, 'senderAddress', 'sender_address') ?? null,
+      executionSignature: pick(ep, 'executionSignature', 'execution_signature') ?? null,
 
       // 4-step progress (only present when includeEvents=true)
       ...(eventsById ? { events: eventsById.get(ep.id) } : {}),

@@ -3,8 +3,10 @@ import {
   OneToMany, CreateDateColumn, UpdateDateColumn,
   Relation
 } from 'typeorm';
+import BN from 'bn.js';
 import type { MasterChainBlockEntity } from './master-chain-block.entity.js';
 import type { ExecutionPartEntity } from './execution-part.entity.js';
+import { BigNumericTransformer } from '../../common/common.utils.js';
 
 @Entity({ name: 'transactions' })
 @Index('ux_transactions_tx_hash', ['transactionHash'], { unique: true })
@@ -37,6 +39,16 @@ export class TransactionEntity {
   @Column({ name: 'master_block_tx_index', type: 'integer' })
   masterBlockTransactionIndex!: number;
 
+  @Column({
+    name: 'fee_per_unit',
+    type: 'numeric',
+    precision: 78,
+    scale: 0,
+    nullable: true,
+    transformer: BigNumericTransformer
+  })
+  feePerUnit!: BN;
+
   // Events we care about for linking later
   @Column({ name: 'source_chain_push_event_id', type: 'uuid', nullable: true })
   sourceChainPushEventId!: string | null;
@@ -44,9 +56,8 @@ export class TransactionEntity {
   @Column({ name: 'state_validation_event_id', type: 'uuid', nullable: true })
   stateValidationEventId!: string | null;
 
-
   @Column({ name: 'source_push_tx_hash', type: 'text', nullable: true })
-  sourcePushTxHash!: string | null;
+  sourceChainPushTxHash!: string | null;
 
   @Column({ name: 'state_validation_tx_hash', type: 'text', nullable: true })
   stateValidationTxHash!: string | null;

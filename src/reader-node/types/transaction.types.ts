@@ -17,8 +17,9 @@ export interface Transaction {
   stateValidator: string;
   executionParts: ExecutionPart[];
   revertExecutionPart?: ExecutionPart;
-  state: TriState;
+  state: number;
   includedInMasterBlock: string;
+  feePerUnit?: string;  // decimal string
   masterBlockTransactionIndex: number;
 
   // Events we keep for linking/inspection
