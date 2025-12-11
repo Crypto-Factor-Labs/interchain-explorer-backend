@@ -43,6 +43,7 @@ export async function indexExecutionPart(
       typeof dto.partialBlockPartIndex === 'number' ? dto.partialBlockPartIndex : null,
     mempoolEpochConsensusProof: dto.mempoolEpochConsensusProof ?? null,
     mempoolEpochEVMProof: dto.mempoolEpochEVMProof ?? null,
+    executionSignature: dto.executionSignature ?? null,
     targetExecutionResult: execRes,
   };
 

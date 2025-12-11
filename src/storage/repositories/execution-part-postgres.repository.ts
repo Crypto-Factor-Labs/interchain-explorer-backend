@@ -69,6 +69,7 @@ export class ExecutionPartPostgresRepository implements ExecutionPartRepository 
     if ('operatorAddress' in input) (row as any).operator_address = input.operatorAddress;
     if ('senderAddress' in input) (row as any).sender_address = input.senderAddress;
     if ('includedInPartialBlock' in input) (row as any).included_in_partial_block = input.includedInPartialBlock;
+    if ('executionSignature' in input) (row as any).execution_signature = input.executionSignature;
 
     return this.repo.save(row);
   }
