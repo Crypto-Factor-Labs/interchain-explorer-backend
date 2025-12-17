@@ -4,13 +4,12 @@ import { StorageModule } from '../storage/storage.module.js';
 import { IndexerLockEntity } from '../storage/entities/indexer-lock.entity.js';  // Import IndexerLock entity
 import { IndexerService } from './indexer.service.js';
 import { ScheduledIndexerService } from './scheduled-indexer.service.js';  // Scheduled Job
-import { PartisiaModule } from '../partisia/partisia.module.js';
 import { ReaderNodeModule } from '../reader-node/reader-node.module.js';
 import { MasterChainModule } from '../master-chain/master-chain.module.js';
 import { PartialChainModule } from '../partial-chain/partial-chain.module.js';
 
 @Module({
-  imports: [StorageModule, PartisiaModule, ReaderNodeModule, MasterChainModule, PartialChainModule, TypeOrmModule.forFeature([IndexerLockEntity])],
+  imports: [StorageModule, ReaderNodeModule, MasterChainModule, PartialChainModule, TypeOrmModule.forFeature([IndexerLockEntity])],
   providers: [IndexerService, ScheduledIndexerService],
   exports: [IndexerService]
 })
