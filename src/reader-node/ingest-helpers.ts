@@ -1,8 +1,11 @@
+import { Logger } from '@nestjs/common/services/index.js';
 import type { ChainEvent, TriState } from './types/common.types.js';
 import BN from 'bn.js';
 type BNLike = BN | { toString(radix?: number): string };
 
 // At ingest means: do those conversions before we save or pass the data deeper into the system.
+
+const log = new Logger('IngestHelpers');
 
 /** Normalize timestamps to ms (seconds or ms in, ms out). */
 export const toMs = (v?: number | null): number | undefined => {
@@ -81,9 +84,14 @@ export function normalizeChainEvent(evt?: any): ChainEvent | undefined {
   // Required fields in the ChainEvent contract:
   const blockHash = e.blockHash;
   const blockHeight = normalizeHeight(e.blockHeight);
-  const blockTimestamp = toMs(e.blockTimestamp);
+  const blockTimestamp = toMs(e.blockTimestamp) ?? 0;  // default to 0 if missing, until the field is provided by the ReaderNode for sourceChainPushEvents
+  const transactionHash = e.transactionHash;
 
-  if (!blockHash || !blockHeight || blockTimestamp == null) return undefined;
+  // Accept missing blockTimestamp for now (because it is set to 0)
+  if (!blockHash || !blockHeight || blockTimestamp == null || !transactionHash) {
+    log.warn('normalizeChainEvent: missing required fields, cannot normalize event', { evt });
+    return undefined;
+  }
 
   return {
     blockHash,

@@ -20,8 +20,8 @@ export interface ChainEvent {
   eventSubchain?: string;
   eventData?: string;
 
-  // Transaction-level (optional)
-  transactionHash?: string;
+  // Transaction-level
+  transactionHash: string;
   transactionReceiver?: string;
   transactionSender?: string;
   transactionSubchain?: string;
