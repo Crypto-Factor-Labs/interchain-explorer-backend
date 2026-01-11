@@ -67,14 +67,11 @@ export class IndexerService {
       // If there are new blocks, index them
       await this.indexNewBlocks(lastIndexedHeight, latestHeight);
 
-      // TEMPORARY disabled
-      if (false) {
-        // Refresh a batch of unconfirmed PartialBlocks
-        await this.processPendingPartialBlocks(100);
+      // Refresh a batch of unconfirmed PartialBlocks
+      await this.processPendingPartialBlocks(100);
 
-        // Refresh a batch of pending Transactions
-        await this.processPendingTransactions(100);
-      }
+      // Refresh a batch of pending Transactions
+      await this.processPendingTransactions(100);
 
     } catch (error: any) {
       this.logger.error('Error during indexing of blocks:', error?.stackTrace ?? error?.message);
@@ -153,6 +150,7 @@ export class IndexerService {
   }
 
   // ------------ Refresh pending Transactions ------------
+
   private async processPendingTransactions(batch: number): Promise<void> {
     const pending = await this.txRepo.getPending(batch);
     if (pending.length === 0) return;

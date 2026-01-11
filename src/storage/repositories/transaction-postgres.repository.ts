@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TransactionEntity } from '../entities/transaction.entity.js';
 import { ListResult, ListTxFilters, TransactionRepository } from './transaction.repository.js';
+import { TransactionStateEnum } from '../../common/transaction-state.enum.js';
 
 @Injectable()
 export class TransactionPostgresRepository implements TransactionRepository {
@@ -195,7 +196,7 @@ export class TransactionPostgresRepository implements TransactionRepository {
 
   async getPending(take: number): Promise<TransactionEntity[]> {
     return this.txRepo.createQueryBuilder('tx')
-      .where('tx.state < :s', { s: 4 })  // state <= EXECUTING
+      .where('tx.state <= :s', { s: TransactionStateEnum.EXECUTING })  // state <= EXECUTING
       .orderBy('tx.id', 'ASC')
       .limit(take)
       .getMany();
